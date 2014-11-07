@@ -1,0 +1,39 @@
+* Ideas
+  - Keypress is an object already, pass it as is to mathparse
+  - Write an Equation class that mathparse can modify.  Each equation in the program
+    will be an instance of the Equation class.  Maybe call it PrettyEquation or something
+    to distinguish it from sympy equations.
+  - Maybe (this might be retarded) the cursor could be the pipe symbol. It wouldn't have to blink,
+    and since everytime a key is pressed, the equation needs to be updated anyway, it shouldn't be 
+    too much of a hassle to just make the cursor symbol move along with the edits this way.  Or that
+    might be a stupid shitty hacky way to do it.  We'll see.
+
+* PrettyEquation class
+** Components:
+   |--------------+------------------------------------------------------------------------------------|
+   | raw_eq:      | This is the equation stored as a string (or list, whatever is better) that is      |
+   |              | the "actual math" equation.  Can be passed to sympy to solve. It might be          |
+   |              | possible to make this pretty easily, if it's just the raw text in an entry field.  |
+   |--------------+------------------------------------------------------------------------------------|
+   | tex_eq       | This is the version of the equation stored as a LIST that is formatted with latex. |
+   |              | Must always be valid TeX, so no hanging tags or braces or parens. This could       |
+   |              | maybe be an object itself, to help keep track of term nesting and all that.        |
+   |--------------+------------------------------------------------------------------------------------|
+   | active_term  | This is a list of chars that represents the term that is actively being edited.    |
+   |              | Should begin and end with left and right braces.  Terms will have a nested         |
+   |              | structure.  Figure out a way to implement that.  Maybe have an active_term_depth   |
+   |              | class variable or something.                                                       |
+   |--------------+------------------------------------------------------------------------------------|
+   | cursor_index | This is the index of the item in raw_eq and active_term where the cursor currently |
+   |              | is. Maybe this needs to be a list that grows according to the depth of nesting     |
+   |              | of the active term?                                                                |
+   |--------------+------------------------------------------------------------------------------------|
+ 
+   
+  
+   
+   
+ 
+
+ 
+ 
