@@ -28,9 +28,23 @@
    |              | is. Maybe this needs to be a list that grows according to the depth of nesting     |
    |              | of the active term?                                                                |
    |--------------+------------------------------------------------------------------------------------|
- 
+   | get_tex_eq() | Getter method. Joins the tex_eq and returns it as a string                         |
+   |--------------+------------------------------------------------------------------------------------|
+   | get_raw_eq() | Getter method.  Joins raw_eq and returns it as a string                            |
+   |--------------+------------------------------------------------------------------------------------|
+** Example of tex_eq:
+   Let's try a simple one first:
+   raw_eq = 'y=x'
+   tex_eq = ['${', ['{', 'y', '}'], '=', ['{', 'x', '}'], '}$'] 
+
+   raw_eq = 'y=(2/3)*x'
+   tex_eq = ['${', ['{', 'y', '}'], '=', ['{', \frac', ['{', '2', '}'], ['{', '3', '}', '}']], '*', 'x', '}$'] 
+
+   tex_eq initializes like this:
+   tex_eq = ['${', ['{', '}'], '}$']
+   and the cursor index has to point to item 1, 1 in tex_eq.
+
    
-  
    
    
  

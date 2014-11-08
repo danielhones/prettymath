@@ -17,8 +17,17 @@ class entry_gui(Tk):
 """        
 
 def key(event):
-    mathentry.translate_key()
-    return
+    equation.add_keypress(event)
+    s = [equation.get_tex_eq(), '\n\nTex_eq:\n\t', str(equation.tex_eq)]
+    s += ['\nTex Index:\t\t', str(equation.tex_eq_index),'\nActive term:\t', str(equation.active_term)]
+    s += ['\nRaw eq:\t\t', str(equation.raw_eq),'\nGet raw_eq:\t',equation.get_raw_eq()]
+    pretty['text'] = ''.join(s)
+
+def clear(*args):
+    entry_string.set('')
+    pretty['text'] = ''
+    equation.reset()
+    
 
 root = Tk()
 root.title('Test GUI')
@@ -30,12 +39,12 @@ equation = mathentry.PrettyEquation()
 # Create widgets:
 content_frame = ttk.Frame(root, padding=(5, 5, 5, 0))
 entry = ttk.Entry(content_frame, textvariable=entry_string, justify='center')
-clear_button = ttk.Button(content_frame, text='Clear') 
+clear_button = ttk.Button(content_frame, text='Clear', command=clear) 
 pretty = ttk.Label(content_frame,
                    border=2,
                    relief='sunken',
                    anchor='nw',
-                   wraplength=300)
+                   wraplength=900)
 
 # Set up grid:
 content_frame.grid(column=0, row=0, sticky='NSEW')
@@ -51,6 +60,7 @@ content_frame.columnconfigure(2, weight=0)
 content_frame.rowconfigure(1, weight=1)
 
 entry.focus()
+entry.bind('<Return>', clear)
 entry.bind('<Key>', key)
 
 root.mainloop()
