@@ -5,6 +5,9 @@ MIT License
 
 
 Here will go the functions for parsing the raw string into latex-ified typeset math
+
+Might need to use copy.deepcopy in some places in the PrettyEquation class. Look into it:
+https://docs.python.org/2/library/copy.html
 """
 
 def flatten(a_list):
