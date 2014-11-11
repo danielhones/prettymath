@@ -26,9 +26,11 @@ def update(event):
 
 def clear(*args):
     equation.reset()
+    entry_string.set('')
     f.clear()
     canvas.show()
-    
+
+
 f = Figure(figsize=(2,1), dpi=100)
 
 entry_string = StringVar()

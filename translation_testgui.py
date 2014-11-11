@@ -7,7 +7,7 @@ import mathentry
 """
 class entry_gui(Tk):
     def do_something(*args):
-        formatted_string.set(raw_string.get())
+        formatted_string.(raw_string.get())
         raw_string.set('')
         return
 
@@ -18,9 +18,9 @@ class entry_gui(Tk):
 
 def key(event):
     equation.add_keypress(event)
-    s = [equation.get_tex_eq(), '\n\nTex_eq:\n\t', str(equation.tex_eq)]
-    s += ['\nTex Index:\t\t', str(equation.tex_eq_index),'\nActive term:\t', str(equation.active_term)]
-    s += ['\nRaw eq:\t\t', str(equation.raw_eq),'\nGet raw_eq:\t',equation.get_raw_eq()]
+    s = [equation.get_tex(), '\n\nTeX:\n\t', str(equation.tex)]
+    s += ['\nTex Index:\t\t', str(equation.tex_index),'\nActive term:\t', str(equation.active_term)]
+    s += ['\nRaw:\t\t', str(equation.raw),'\nGet raw_eq:\t',equation.get_raw()]
     pretty['text'] = ''.join(s)
 
 def clear(*args):

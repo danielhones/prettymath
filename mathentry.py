@@ -4,11 +4,16 @@
 MIT License
 
 
-Here will go the functions for parsing the raw string into latex-ified typeset math
+This file defines the PrettyEquation class and MathEntryWidget class, along with some other utility 
+functions and classes.
 
 Might need to use copy.deepcopy in some places in the PrettyEquation class. Look into it:
 https://docs.python.org/2/library/copy.html
 """
+
+from translate_functions import *
+from mathentry_constants import *
+
 
 def flatten(a_list):
     """
@@ -43,55 +48,76 @@ class Observer(object):
            
 class PrettyEquation(Observable):
     """
-    This class has two main attributes: raw_eq, which is a valid Python math expression, and tex_eq
+    This class has two main attributes: raw, which is a valid Python math expression, and tex
     which is that expression formatted to look nice in TeX.
     """
-    # These are characters that that close the current active term and start a new one.
-    # These characters exist outside of the local term:
-    NEW_TERM_CHARS = r'=+-*('
-    # This is the list that is inserted when a new term is formed. The pipe symbol is used as a cursor
-    NEW_ACTIVE_TERM = ['{', '|', '}']
-    IGNORE_KEYS = ['Shift_L', 'Shift_R', 'Alt_L', 'Alt_R', 'Control_L', 'Control_R',
-                   'Tab'] 
-                   
-                   
-    # This dictionary maps characters to functions or lambdas that perform the required operation.
-    # Apparently the function must be defined before they can be referenced here.
-#    TRANSLATE_CHAR = {r'/' : insert_frac(),
-#                      r'(' : insert_parens()}      
-    # This dictionary is for mapping keycodes (or keysym?) to the right operation.
-    # For example, left arrow, backspace, etc.
-    TRANSLATE_KEYCODE = {}
+
 
     def __init__(self):
         Observable.__init__(self)
+
+        # This dictionary maps characters to functions or lambdas that perform the required operation.
+        # Apparently the function must be defined before they can be referenced here.
+        self.TRANSLATE_CHAR = {r'/' : insert_frac,
+                               r'(' : insert_parens}      
+        
+        # This dictionary is for mapping keycodes (or keysym?) to the right operation.
+        # For example, left arrow, backspace, etc.  
+        # This will need some work to make sure it works cross platform.
+        self.TRANSLATE_KEYSYM = {}
+
+
+        # Set up the rest of the class variables:
         self.reset()
 
-    def reset(self):        
-        self.raw_eq = []
-        self.active_term = self.NEW_ACTIVE_TERM[:]
-        self.tex_eq = ['${', self.active_term, '}$']
-        self.tex_eq_index = [1,1]
-        self.raw_eq_index = 0
+
+
+    def reset(self):
+        """
+        Reset the equation to a blank one.  Good as new!
+        """
+        self.raw = []
+        self.active_term = NEW_ACTIVE_TERM[:]
+        self.tex = ['${', self.active_term, '}$']
+        self.tex_index = [1,1]
+        self.raw_index = 0
+        self.previous_term = []
+        self.previous_keypress = ''
 
     def add_keypress(self, newkey):
         """
         Takes a new event object representing a keypress.  Translates key and adds it to
-        raw_eq and tex_eq in self.  Should it return an error?
+        raw and tex in self.  Should it return an error?
         """
-        if newkey.keysym in self.IGNORE_KEYS:
+        # For debugging:
+        print newkey.keycode    
+        
+        if newkey.keysym in IGNORE_THESE_KEYSYMS:
             return
 
-        # First check if we need to make a new term:
-        if newkey.char in self.NEW_TERM_CHARS:
+        if newkey.keycode in IGNORE_THESE_KEYCODES:
+            return
+
+        if newkey.char in self.TRANSLATE_CHAR:
+            self.TRANSLATE_CHAR[newkey.char](self)
+            return
+
+            
+
+        # Check if we need to make a new term:
+        if newkey.char in SPECIAL_CHARS:
             self.make_new_term(newkey.char)
+            self.previous_keypress = newkey
             return
-
+        
+            
+        
         # Not the real code:
-        self.active_term.insert(self.tex_eq_index[-1], newkey.char)
-        self.raw_eq.insert(self.raw_eq_index, newkey.char)
-        self.raw_eq_index += 1
-        self.tex_eq_index[-1] += 1
+        self.active_term.insert(self.tex_index[-1], newkey.char)
+        self.raw.insert(self.raw_index, newkey.char)
+        self.raw_index += 1
+        self.tex_index[-1] += 1
+        self.previous_keypress = newkey
         self.notify_observers()
 
     def make_new_term(self, char):
@@ -99,22 +125,29 @@ class PrettyEquation(Observable):
         Makes a new active term at the same depth as the current one. For example 
         """
         # Remove cursor symbol and index to place in current active term:
-        self.active_term.pop(self.tex_eq_index.pop())
-        # Put the current, just terminated active term into tex_eq by VALUE, so that subsequent
+        self.active_term.pop(self.tex_index.pop())
+
+        # Put the current, just terminated active term into tex by VALUE, so that subsequent
         # changes to active_term no longer affect it:
-        self.tex_eq[self.tex_eq_index[-1]] = self.active_term[:]
+        self.tex[self.tex_index[-1]] = self.active_term[:]
+
         # Insert the character:
-        self.tex_eq.insert( self.tex_eq_index[-1] + 1, char )
-        self.raw_eq.insert( self.raw_eq_index, char )
-        self.raw_eq_index += 1
+        self.tex.insert( self.tex_index[-1] + 1, char )
+        self.raw.insert( self.raw_index, char )
+        self.raw_index += 1
+
         # Increment the next higher level index by 2
-        self.tex_eq_index[-1] += 2
-        # Make new active term:
-        self.active_term = self.NEW_ACTIVE_TERM[:]
-        self.tex_eq.insert( self.tex_eq_index[-1], self.active_term )
+        self.tex_index[-1] += 2
+
+        # Make new active term
+        self.active_term = NEW_ACTIVE_TERM[:]
+        self.tex.insert( self.tex_index[-1], self.active_term )
+
         # New active term index:
-        self.tex_eq_index.append(1)
+        self.tex_index.append(1)
         self.notify_observers()
+        
+        # Update previous keypress:
         
         
     def test_observe(self):
@@ -123,14 +156,14 @@ class PrettyEquation(Observable):
         """
         self.notify_observers()
         
-    def get_tex_eq(self):
+    def get_tex(self):
         """
         Flattens and returns formatted equation as a string
         """
-        return ''.join(flatten(self.tex_eq))
+        return ''.join(flatten(self.tex))
 
-    def get_raw_eq(self):
+    def get_raw(self):
         """
         Returns raw equation as a string
         """
-        return ''.join(self.raw_eq)
+        return ''.join(flatten(self.raw))
