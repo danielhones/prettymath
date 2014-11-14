@@ -18,9 +18,10 @@ class entry_gui(Tk):
 
 def key(event):
     equation.add_keypress(event)
-    s = [equation.get_tex(), '\n\nTeX:\n\t', str(equation.tex)]
-    s += ['\nTex Index:\t\t', str(equation.tex_index),'\nActive term:\t', str(equation.active_term)]
-    s += ['\nRaw:\t\t', str(equation.raw),'\nGet raw_eq:\t',equation.get_raw()]
+    s = [equation.get_latex(), '\n\nLatex:\n\t', str(equation.latex)]
+    s += ['\nLatex Index:\n\t', str(equation.latex_index)]
+    s += ['\nRunning List:\n\t', str(equation.running_list)]
+#    s += ['\nRaw:\t\t', str(equation.raw),'\nGet raw_eq:\t',equation.get_raw()]
     pretty['text'] = ''.join(s)
 
 def clear(*args):

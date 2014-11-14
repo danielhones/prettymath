@@ -8,7 +8,7 @@ This file contains definitions for functions that perform necessary operations t
 PrettyEquation objects.
 """
 
-from mathentry_constants import *
+from constants import *
 
 def insert_frac(equation):
     """
@@ -17,12 +17,8 @@ def insert_frac(equation):
 
     # Really need to think this one through.
     if equation.previous_keypress == '' or equation.previous_keypress.char in SPECIAL_CHARS:
-        equation.active_term = [r'\frac', '{', '|', '}{', '}']
-        equation.tex_index.append(2)
-#        equation.active_term.insert(2, '{')
-#        equation.active_term.insert( equation.tex_index[-1] + 1, '}{' )
-#        equation.active_term.append('}')
         return
 
 def insert_parens(equation):
     return
+

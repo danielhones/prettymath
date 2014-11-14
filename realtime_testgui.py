@@ -1,7 +1,7 @@
 """
 GUI to test the realtime update and rendering of PrettyEquation instance
 
-add a second label to display raw_eq to insure it is equal to what tex_eq is displaying
+add a second label to display raw_eq to insure it is equal to what latex_eq is displaying
 """
 
 
@@ -21,7 +21,7 @@ root.title("Embedding in TK")
 def update(event):
     equation.add_keypress(event)
     f.clear()
-    f.text(.1, .5, equation.get_tex_eq())
+    f.text(.1, .5, equation.get_latex())
     canvas.show()
 
 def clear(*args):
