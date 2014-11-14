@@ -46,9 +46,11 @@ class PrettyEquation(Observable):
 
         # This dictionary maps characters to functions that perform the required operation.
         # The functions it points to are defined in translate_functions.py 
-        self.TRANSLATE_CHAR = {r'/' : insert_frac,
-                               r'(' : insert_parens}      
-
+        self.TRANSLATE_CHAR = {'/' : insert_frac,
+                               '(' : open_parens,
+                               '^' : insert_superscript,
+                               '_' : insert_subscript}
+        
         # This dictionary is for mapping keycodes to the right operation.
         # For example, left arrow, backspace, etc.  
         # This will need some work to make sure it works cross platform.
@@ -95,7 +97,8 @@ class PrettyEquation(Observable):
         # If there's nothing special that needs to be done with the new keypress, these next few lines
         # add the character to the latex equation at the current index, update running_list, 
         # previous_keypress (may not actually need that), and latex_index
-        self.latex.insert(self.latex_index[-1], newkey.char)
+        current_list = eval( 'self.latex' + get_current_list_index(self.latex_index) )
+        current_list.insert(self.latex_index[-1], newkey.char)
         self.latex_index[-1] += 1
         if newkey.char in SPECIAL_CHARS:
             self.running_list = []
@@ -107,12 +110,19 @@ class PrettyEquation(Observable):
         command = self.check_for_latex_command(''.join(self.running_list))
         if command:
             size = len(command)
-             # Remove all the individual letters that spell the command
-            del self.latex[ self.latex_index[-1] - size : self.latex_index[-1] ] 
+            # Remove all the individual letters that spell the command
+            del current_list[ self.latex_index[-1] - size : self.latex_index[-1] ]
+            
             # Replace them with a single string element containing the LaTeX command
-            self.latex.insert(self.latex_index[-1] - size, LATEX_COMMANDS[command])
-            # Reset running_list and update index
-            self.running_list = []
+            current_list.insert(self.latex_index[-1] - size, LATEX_COMMANDS[command])
+
+            # Reset running_list if it just inserted a function, otherwise make running_list
+            # hold the current term.
+            if command in FUNCTIONS:
+                self.running_list = []
+            else:
+                del self.running_list[-size:]
+                self.running_list.append(LATEX_COMMANDS[command])
             self.latex_index[-1] -= size - 1
                
             

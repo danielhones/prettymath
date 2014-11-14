@@ -21,7 +21,7 @@ root.title("Embedding in TK")
 def update(event):
     equation.add_keypress(event)
     f.clear()
-    f.text(.1, .5, equation.get_latex())
+    f.text(.1, .5, equation.get_latex(), size='x-large')
     canvas.show()
 
 def clear(*args):

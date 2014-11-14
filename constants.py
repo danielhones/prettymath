@@ -35,20 +35,39 @@ if platform.system() == 'Darwin':
     CAPS_LOCK   = 65536
     HOME        = 65360
     END         = 65367
-    PAGE_UP     = 7665452       # keysym is 'Prior' in OS X
-    PAGE_DOWN   = 7993133       # keysym is 'Next' in OS X
-    BACKSPACE   = 3342463       # keysym is 'BackSpace' in OS X        
+    PAGE_UP     = 7665452       # keysym 'Prior' in OS X
+    PAGE_DOWN   = 7993133       # keysym 'Next' 
+    BACKSPACE   = 3342463       # keysym 'BackSpace' 
     DELETE      = 7730984
     LEFT        = 8124162
     RIGHT       = 8189699
     UP          = 8320768
     DOWN        = 8255233
+elif platform.system() == 'Linux':
+    SHIFT       = (50, 62)
+    SUPER       = 133
+    CONTROL     = (37, 105)
+    ALT         = (64, 108)
+    CAPS_LOCK   = 66
+    HOME        = 110
+    END         = 115
+    PAGE_UP     = 112           # keysym 'Prior' in Linux
+    PAGE_DOWN   = 117           # keysym 'Next'
+    BACKSPACE   = 22            # keysym 'BackSpace'
+    DELETE      = 119
+    LEFT        = 113
+    RIGHT       = 114
+    UP          = 111
+    DOWN        = 116
     
-
-# Define also for Windows and Linux here:
+    
+    
+# Define also for Windows
 
 
 # Ignore these keys (may not be necessary)
+# Maybe a better way is to check for special characters, then for special keys (like backspace, arrows0
+# and then check if newkey.char (in mathentry.py) is a character, digit, or punctuation?
 IGNORE_THESE_KEYCODES = flatten( (SHIFT, SUPER, CONTROL, ALT, CAPS_LOCK) )
 
 
@@ -73,17 +92,29 @@ IGNORE_THESE_KEYSYMS = ['Shift_L', 'Shift_R', 'Alt_L', 'Alt_R', 'Control_L', 'Co
 
 # This dictionary maps LaTeX commands to what to replace them with in the formatted equation.
 # This allows for example, typing 'pi' to translate to '\pi'.  Not sure how many of these I should support
-LATEX_COMMANDS = {'pi': r'\pi',
-                  'sin': r'\sin',
-                  'cos': r'\cos',
-                  'tan': r'\tan',
-                  'sec': r'\sec',
-                  'csc': r'\csc',
-                  'infty': r'\infty'}
-                  
+# The space after the command makes it possible to have consecutive LaTeX commands without throwing an error
+LATEX_COMMANDS = {'pi'          : r'\pi ',
+                  'omega'       : r'\omega ',
+                  'epsilon'     : r'\epsilon ',
+                  'sin'         : r'\sin ',
+                  'cos'         : r'\cos ',
+                  'tan'         : r'\tan ',
+                  'cot'         : r'\cot ',
+                  'sec'         : r'\sec ',
+                  'csc'         : r'\csc ',
+                  'log'         : r'\log ',
+                  'ln'          : r'\ln ',
+                  'lg'          : r'\lg ',
+                  'cross'       : r'\cross',            # maybe have a keyboard shortcut for this
+                  'infty'       : r'\infty '}
 
-
-
-
-
-
+FUNCTIONS = ('sin', r'\sin ',
+             'cos', r'\cos ',
+             'tan', r'\tan ',
+             'cot', r'\cot ',
+             'sec', r'\sec ',
+             'csc', r'\csc ',
+             'log', r'\log ',
+             'ln', r'\ln ',
+             'lg', r'\lg ',
+             'cross', r'\cross ')
