@@ -76,19 +76,15 @@ IGNORE_THESE_KEYCODES = flatten( (SHIFT, SUPER, CONTROL, ALT, CAPS_LOCK) )
 SPECIAL_CHARS = r'=+-*/(^'
 
 # Keycodes that need something done with them:
-SPECIAL_KEYCODES = {UP: '',
-                    DOWN: '',
-                    RIGHT: '',
-                    LEFT: '',
-                    BACKSPACE: '',
+SPECIAL_KEYCODES = {BACKSPACE: '',
                     DELETE: ''}
 
 
-# This is the list that is inserted when a new term is formed. The pipe symbol is used as a cursor
-NEW_ACTIVE_TERM = ['{', '|', '}']
+# String that's used for the cursor symbol
+CURSOR = r'|'
 
 # Once get a complete list of keycodes for windows and linux, can erase this.  These are Linux:
-IGNORE_THESE_KEYSYMS = ['Shift_L', 'Shift_R', 'Alt_L', 'Alt_R', 'Control_L', 'Control_R']
+IGNORE_THESE_KEYSYMS = ['Shift_L', 'Shift_R', 'Alt_L', 'Alt_R', 'Control_L', 'Control_R', 'Space']
 
 # This dictionary maps LaTeX commands to what to replace them with in the formatted equation.
 # This allows for example, typing 'pi' to translate to '\pi'.  Not sure how many of these I should support

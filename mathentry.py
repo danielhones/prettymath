@@ -72,7 +72,7 @@ class PrettyEquation(Observable):
         Reset the equation to a blank one
         """
         self.raw = []
-        self.latex = ['|']
+        self.latex = [CURSOR]
         self.latex_index = [0]
         self.previous_keypress = ''
         self.running_list = []
