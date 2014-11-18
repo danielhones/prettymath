@@ -44,10 +44,16 @@ class PrettyEquation(Observable):
     def __init__(self):
         Observable.__init__(self)
 
+        # Set up the rest of the class variables:
+        self.reset()
+
+        # This seems to be the only place to define these dictionaries:
+        
         # This dictionary maps characters to functions that perform the required operation.
         # The functions it points to are defined in translate_functions.py 
         self.TRANSLATE_CHAR = {'/' : insert_frac,
                                '(' : open_parens,
+                               ')' : close_parens,
                                '^' : insert_superscript,
                                '_' : insert_subscript}
         
@@ -55,14 +61,15 @@ class PrettyEquation(Observable):
         # For example, left arrow, backspace, etc.  
         # This will need some work to make sure it works cross platform.
         # Use the keycode constants defined in mathentry_constants.py
-        self.TRANSLATE_KEYCODE = {}
+        self.TRANSLATE_KEYCODE = {RIGHT : move_cursor,
+                                  LEFT  : move_cursor,
+                                  UP    : cursor_up,
+                                  DOWN  : cursor_down }
 
-        # Set up the rest of the class variables:
-        self.reset()
 
     def reset(self):
         """
-        Reset the equation to a blank one.  Good as new!
+        Reset the equation to a blank one
         """
         self.raw = []
         self.latex = ['|']
@@ -77,7 +84,12 @@ class PrettyEquation(Observable):
         """
         # For debugging:
         #print newkey.keycode    
-        
+
+        if newkey.keycode in self.TRANSLATE_KEYCODE:
+            self.TRANSLATE_KEYCODE[newkey.keycode](self, newkey.keycode)
+            self.notify_observers()
+            return
+
         if newkey.keysym in IGNORE_THESE_KEYSYMS:
             return
 
@@ -93,11 +105,12 @@ class PrettyEquation(Observable):
             self.TRANSLATE_CHAR[newkey.char](self)
             self.notify_observers()
             return
+
         
         # If there's nothing special that needs to be done with the new keypress, these next few lines
         # add the character to the latex equation at the current index, update running_list, 
         # previous_keypress (may not actually need that), and latex_index
-        current_list = eval( 'self.latex' + get_current_list_index(self.latex_index) )
+        current_list = get_current_list(self.latex_index, self.latex)
         current_list.insert(self.latex_index[-1], newkey.char)
         self.latex_index[-1] += 1
         if newkey.char in SPECIAL_CHARS:
@@ -106,7 +119,7 @@ class PrettyEquation(Observable):
             self.running_list.append(newkey.char)
         self.previous_keypress = newkey
 
-        # Check to see if running_list is something meaningful in LaTeX:
+        # Check to see if the end part of running_list is something meaningful in LaTeX:
         command = self.check_for_latex_command(''.join(self.running_list))
         if command:
             size = len(command)
@@ -149,6 +162,6 @@ class PrettyEquation(Observable):
 
     def get_raw(self):
         """
-        Returns raw equation as a string
+        Converts the LaTeX expression into a valid Python one and returns it as a string
         """
-        return ''.join(flatten(self.raw))
+        return

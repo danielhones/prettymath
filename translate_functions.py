@@ -10,33 +10,59 @@ PrettyEq objects.
 
 from constants import *
 
-def get_full_index(index):
-    # May not need this function
-    return
 
-def get_current_list_index(index):
+def get_current_list(index, nested_list):
     """
-    Gets passed index, which is a list, and determines which (if any) list inside the nested latex
-    eq list is the one currently being edited.  Returns a string in the format [a][b][c] so it 
-    can be used with eval() in other functions to get the current list.
+    Gets passed index, which is a list, and nested_list and determines which (if any) list inside the nested latex
+    eq list is the one currently being edited.  Returns the current list
     """
     if len(index) == 1:
-        return ''
+        return nested_list
     else:
         result = []
         # Leave off the last element in index because that points to the element itself, not the
-        # list containing it, which is what we want.
+        # list containing it, which is what we want:
         for i in index[:-1]:
             result.append(i)
         # First turn the integer elements of result into strings, then join them with '][' so
         # they're in the format of a list index, then put the outer brackets on
-        return '['+']['.join(map(str, result))+']'
+        return eval('nested_list' + '[' + ']['.join(map(str, result)) + ']')
 
+def move_cursor(eq, direction):
+    """
+    TODO:
+    Need to modify this so that it can navigate to the end of the equation and append a new character,
+    and go INSIDE nested lists, not just exit from them.  Might require a little different approach
+    """
+    if direction == LEFT:
+        motion = -1
+    elif direction == RIGHT:
+        motion = 1
+    current_list = get_current_list(eq.latex_index, eq.latex)
+    # Remove cursor:
+    del current_list[eq.latex_index[-1]]
+    # Check to see if moving left or right goes beyond bounds of current list:
+    beyond_list = eq.latex_index[-1] + motion == len(current_list) or eq.latex_index[-1] < 0
+    if beyond_list:
+        eq.latex_index.pop()
+        eq.latex_index[-1] += motion
+        eq.latex.insert( eq.latex_index[-1], '|' )
+    else:
+        eq.latex_index[-1] += motion
+        current_list.insert( eq.latex_index[-1], '|' )
+    return
+
+def cursor_up(eq, keycode):
+    return
+    
+def cursor_down(eq, keycode):
+    return
+    
 def insert_frac(eq):
     """
     Insert \frac and accoutrement in the right places when user presses slash
     """
-    current_list = eval('eq.latex' + get_current_list_index(eq.latex_index))
+    current_list = get_current_list(eq.latex_index, eq.latex)
     # Delete cursor symbol
     del current_list[eq.latex_index[-1]]
     last_element = current_list[eq.latex_index[-1]-1]
@@ -60,7 +86,7 @@ def insert_frac(eq):
 
 def insert_subscript(eq):
     # this might be code that gets duplicated in a lot of these functions, see if there's better way to do it.
-    current_list = eval('eq.latex' + get_current_list_index(eq.latex_index))
+    current_list = get_current_list(eq.latex_index, eq.latex)
     # Delete cursor symbol
     del current_list[eq.latex_index[-1]]
     # insert the list containing the subscript. Use arrow keys to navigate out of it:
@@ -70,7 +96,7 @@ def insert_subscript(eq):
     return
 
 def insert_superscript(eq):
-    current_list = eval('eq.latex' + get_current_list_index(eq.latex_index))
+    current_list = get_current_list(eq.latex_index, eq.latex)
     # Delete cursor symbol
     del current_list[eq.latex_index[-1]]
     # insert the list containing the superscript. Use arrow keys to navigate out of it:
@@ -83,11 +109,13 @@ def open_parens(eq):
     """
     insert set of parentheses
     """
-    current_list = eval('eq.latex' + get_current_list_index(eq.latex_index))
+    current_list = get_current_list(eq.latex_index, eq.latex)    
     # Delete cursor symbol
     del current_list[eq.latex_index[-1]]
     # insert the list containing the subscript. Use arrow keys to navigate out of it:
-    current_list.insert(eq.latex_index[-1], [r'\left(', '|', '\right)'])
+    # '\right.' places an invisible right element so that there will just be a left parenthese
+    # until the user types the right one.
+    current_list.insert(eq.latex_index[-1], [r'\left(', '|', r'\right.'])
     # Add new level to latex_index:
     eq.latex_index.append(1)
 
@@ -98,4 +126,6 @@ def close_parens(eq):
     called when ')' is typed explicitly or when the ) is navigated past using arrow keys.
     Need to figure out how to handle an attempt to delete just one of the parentheses
     """
+    current_list = get_current_list(eq.latex_index, eq.latex)
+    current_list[-1] = r'\right)'
     return
