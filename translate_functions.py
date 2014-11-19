@@ -38,18 +38,30 @@ def move_cursor(eq, direction):
         motion = -1
     elif direction == RIGHT:
         motion = 1
-    current_list = get_current_list(eq.latex_index, eq.latex)
-    # Remove cursor:
-    del current_list[eq.latex_index[-1]]
-    # Check to see if moving left or right goes beyond bounds of current list:
-    beyond_list = eq.latex_index[-1] + motion == len(current_list) or eq.latex_index[-1] < 0
-    if beyond_list:
+
+    last_index = eq.latex_index[-1]
+    next_index = last_index + motion
+    
+    # Check if trying to move beyond bounds of whole equation:
+    out_of_bounds = (len(eq.latex_index) == 1) and (next_index < 0 or next_index == len(eq.latex))
+    if out_of_bounds:
+        return
+
+    current_list = get_current_list(eq.latex_index, eq.latex)        
+    next_element = current_list[next_index]
+
+    # Check if moving to edge (ie. into first or last position) of an inner list.
+    # Since these will contain LaTeX commands, move out of the list to preserve the list structure
+    moving_to_edge = (len(eq.latex_index) > 1) and (next_index = 0 or next_index == len(eq.latex) - 1) 
+    if moving_to_edge:
+        del current_list[last_index]
         eq.latex_index.pop()
-        eq.latex_index[-1] += motion
-        eq.latex.insert( eq.latex_index[-1], '|' )
-    else:
-        eq.latex_index[-1] += motion
-        current_list.insert( eq.latex_index[-1], '|' )
+        eq.latex.insert(eq.latex_index[-1], CURSOR)
+
+
+    # Fall through case, swap cursor with the appropriate adjacent element:
+    current_list[last_index], current_list[next_index] = current_list[next_index], current_list[last_index]
+
     return
 
 def cursor_up(eq, keycode):
