@@ -30,9 +30,8 @@ def get_current_list(index, nested_list):
 
 def move_cursor(eq, direction):
     """
-    TODO:
-    Get this working right.  Go step by step through conditions.  There's a bug somewhere.  Try starting from the
-    top again.
+    This function behaves correctly now (in all the tests I could think of).  BUT it's probably not the best
+    clearest way to write it.  Think hard and try to come up with something better
     """
     if direction == LEFT:
         motion = -1
@@ -41,27 +40,48 @@ def move_cursor(eq, direction):
 
     last_index = eq.latex_index[-1]
     next_index = last_index + motion
-    
+        
     # Check if trying to move beyond bounds of whole equation:
     out_of_bounds = (len(eq.latex_index) == 1) and (next_index < 0 or next_index == len(eq.latex))
     if out_of_bounds:
         return
 
+    eq.running_list = []
     current_list = get_current_list(eq.latex_index, eq.latex)        
     next_element = current_list[next_index]
 
     # Check if moving to edge (ie. into first or last position) of an inner list.
     # Since these will contain LaTeX commands, move out of the list to preserve the list structure
-    moving_to_edge = (len(eq.latex_index) > 1) and (next_index = 0 or next_index == len(eq.latex) - 1)
+    moving_to_edge = (len(eq.latex_index) > 1) and (next_index == 0 or next_index == len(current_list) - 1)
     if moving_to_edge:
         del current_list[last_index]
         eq.latex_index.pop()
+        # Another goofy way to do things. Should come up with a clearer easier to read way:
+        eq.latex_index[-1] += [None, 1, 0][motion]
         eq.latex.insert(eq.latex_index[-1], CURSOR)
         return
 
-    # Fall through case, swap cursor with the appropriate adjacent element:
-    current_list[last_index], current_list[next_index] = current_list[next_index], current_list[last_index]
+    # If we're moving into a list 
+    if type(next_element) is list:
+        # Remove cursor:
+        del current_list[last_index]
+        # If moving to the right, our deletion of the cursor just changed the index of the list 
+        # we're moving into, so we need to adjust it:
+        if motion == 1:
+            next_index += -1
+        # Kind of a goofy way to do this.  If moving to the right, make the index 1, if moving to the left,
+        # make it equal the length of the list minus 2.  This is to avoid having negative numbers as an index,
+        # although that may not matter
+        inner_index = [None, 1, len(current_list[next_index]) - 1][motion]
+        next_element.insert(inner_index, CURSOR)
+        eq.latex_index[-1] = next_index
+        eq.latex_index.append(inner_index)
+        return
 
+    # Fall through case, swap cursor with the appropriate adjacent element, staying within the current list
+    # and update latex_index:
+    current_list[last_index], current_list[next_index] = current_list[next_index], current_list[last_index]
+    eq.latex_index[-1] = next_index
     return
 
 def cursor_up(eq, keycode):
