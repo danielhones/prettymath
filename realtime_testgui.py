@@ -21,6 +21,7 @@ root.title("Embedding in TK")
 def update(event):
     equation.add_keypress(event)
     f.clear()
+    # ha and va are horizontal and vertical alignment, respectively:
     f.text(.5, .5, equation.get_latex(), size='x-large', ha='center', va='center')
     canvas.show()
 
@@ -30,8 +31,7 @@ def clear(*args):
     f.clear()
     canvas.show()
 
-
-f = Figure(figsize=(2,1), dpi=100)
+f = Figure(figsize=(5,3), dpi=100, facecolor='white')
 
 entry_string = StringVar()
 equation = mathentry.PrettyEquation()

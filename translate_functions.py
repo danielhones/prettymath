@@ -28,6 +28,10 @@ def get_current_list(index, nested_list):
         # they're in the format of a list index, then put the outer brackets on
         return eval('nested_list' + '[' + ']['.join(map(str, result)) + ']')
 
+def backslash(eq):
+    print 'backslash'
+    return
+    
 def move_cursor(eq, direction):
     """
     This function behaves correctly now (in all the tests I could think of).  BUT it's probably not the best
@@ -46,7 +50,6 @@ def move_cursor(eq, direction):
     if out_of_bounds:
         return
 
-    eq.running_list = []
     current_list = get_current_list(eq.latex_index, eq.latex)        
     next_element = current_list[next_index]
 
@@ -93,6 +96,9 @@ def cursor_down(eq, keycode):
 def insert_frac(eq):
     """
     Insert \frac and accoutrement in the right places when user presses slash
+
+    TODO:
+    This needs some work to account for fractional superscripts and parentheses expressions preceding it
     """
     current_list = get_current_list(eq.latex_index, eq.latex)
     # Delete cursor symbol
@@ -112,8 +118,6 @@ def insert_frac(eq):
         # Add new level to latex_index:
         eq.latex_index[-1] -= size
         eq.latex_index.append(2+len(eq.running_list))
-    # And reset running_list:
-    eq.running_list = []
     return
 
 def insert_subscript(eq):
@@ -141,7 +145,8 @@ def open_parens(eq):
     """
     insert set of parentheses
     """
-    current_list = get_current_list(eq.latex_index, eq.latex)    
+    current_list = get_current_list(eq.latex_index, eq.latex)
+
     # Delete cursor symbol
     del current_list[eq.latex_index[-1]]
     # insert the list containing the subscript. Use arrow keys to navigate out of it:
@@ -161,5 +166,13 @@ def close_parens(eq):
     # TODO:
     # make sure this works properly.  Right now (x+1)/ doesn't come out right
     current_list = get_current_list(eq.latex_index, eq.latex)
+    eq.running_list = []
+
     current_list[-1] = r'\right)'
+    # Remove cursor:
+    del current_list[eq.latex_index[-1]] 
+    eq.latex_index.pop()
+    eq.latex_index[-1] += 1
+    new_current_list = get_current_list(eq.latex_index, eq.latex)
+    new_current_list.insert(eq.latex_index[-1], CURSOR)
     return

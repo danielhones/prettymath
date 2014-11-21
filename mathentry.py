@@ -51,11 +51,12 @@ class PrettyEquation(Observable):
         
         # This dictionary maps characters to functions that perform the required operation.
         # The functions it points to are defined in translate_functions.py 
-        self.TRANSLATE_CHAR = {'/' : insert_frac,
-                               '(' : open_parens,
-                               ')' : close_parens,
-                               '^' : insert_superscript,
-                               '_' : insert_subscript}
+        self.TRANSLATE_CHAR = {'/'      : insert_frac,
+                               '('      : open_parens,
+                               ')'      : close_parens,
+                               '^'      : insert_superscript,
+                               '_'      : insert_subscript,
+                               r'\\'    : backslash}
         
         # This dictionary is for mapping keycodes to the right operation.
         # For example, left arrow, backspace, etc.  
@@ -65,6 +66,12 @@ class PrettyEquation(Observable):
                                   LEFT  : move_cursor,
                                   UP    : cursor_up,
                                   DOWN  : cursor_down }
+
+        # This dictionary is for extending the LaTeX capabilities of this module.  It will allow
+        # developers to add their own functions.  This will be checked before the default ones.
+        # For example, someone could add functionality for a certain keyboard shortcut.  Need to figure
+        # out the best way to format the keys.  Maybe keycodes and states?
+        self.EXTENSIONS = {}
 
 
     def reset(self):
@@ -82,11 +89,10 @@ class PrettyEquation(Observable):
         Takes a new event object representing a keypress.  Translates key and adds it to
         raw and latex in self.  Should it return an error?
         """
-        # For debugging:
-        #print newkey.keycode    
 
         if newkey.keycode in self.TRANSLATE_KEYCODE:
             self.TRANSLATE_KEYCODE[newkey.keycode](self, newkey.keycode)
+            self.running_list = []
             self.notify_observers()
             return
 
@@ -103,6 +109,7 @@ class PrettyEquation(Observable):
         if newkey.char in self.TRANSLATE_CHAR:
             # Call the function needed to do some Latex formatting
             self.TRANSLATE_CHAR[newkey.char](self)
+            self.running_list = []
             self.notify_observers()
             return
 
@@ -154,6 +161,14 @@ class PrettyEquation(Observable):
                 return string[-i:]
         return None
         
+    def add_extension(self, key, function):
+        self.EXTENSIONS[key] = function
+        return
+
+    def remove_extension(self,  key):
+        del self.EXTENSIONS[key]
+        return
+    
     def get_latex(self):
         """
         Flattens and returns formatted equation as a string
