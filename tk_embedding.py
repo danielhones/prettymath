@@ -20,6 +20,7 @@ root.wm_title("Embedding in TK")
 
 
 f = Figure(figsize=(5,4), dpi=100)
+
 a = f.add_subplot(111)
 t = arange(0.0,3.0,0.01)
 s = sin(2*pi*t)
@@ -41,5 +42,7 @@ canvas._tkcanvas.pack(side=Tk.TOP, fill=Tk.BOTH, expand=1)
 
 button = Tk.Button(master=root, text='Quit', command=sys.exit)
 button.pack(side=Tk.BOTTOM)
+#a.text(.2,.2,r'$y=3$\rule{1pt}{12pt}$x$')
+
 
 Tk.mainloop()
