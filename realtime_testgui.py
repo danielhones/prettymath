@@ -34,7 +34,7 @@ def clear(*args):
 f = Figure(figsize=(5,3), dpi=100, facecolor='white')
 
 entry_string = StringVar()
-equation = mathentry.PrettyEquation()
+equation = mathentry.PrettyMath()
 
 canvas = FigureCanvasTkAgg(f, master=root)
 canvas.show()
