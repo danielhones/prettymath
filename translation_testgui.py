@@ -18,11 +18,10 @@ class entry_gui(Tk):
 
 def key(event):
     equation.add_keypress(event)
-    s = [equation.get_latex(), '\n\nLatex:\n\t', str(equation.latex)]
-    s += ['\nLatex Index:\n\t', str(equation.latex_index)]
-    s += ['\nRunning List:\n\t', str(equation.running_list)]
-#    s += ['\nRaw:\t\t', str(equation.raw),'\nGet raw_eq:\t',equation.get_raw()]
-    pretty['text'] = ''.join(s)
+    s = ''.join(equation.root.walk_tree()) + '\n\nLatex:\n\t'
+    s += equation.get_latex()
+    #s += ['\nRaw:\t\t', str(equation.raw),'\nGet raw_eq:\t',equation.get_raw()]
+    pretty['text'] = s
 
 def clear(*args):
     entry_string.set('')
@@ -35,7 +34,7 @@ root.title('Test GUI')
 
 # Make variables:
 entry_string = StringVar()
-equation = mathentry.PrettyEquation()
+equation = mathentry.PrettyMath()
 
 # Create widgets:
 content_frame = ttk.Frame(root, padding=(5, 5, 5, 0))

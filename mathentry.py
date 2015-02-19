@@ -12,10 +12,12 @@ left child, right sibling representation.  Each node links to its parent, its le
 right sibling, and the root of the tree. If a tree's root is itself, then it is the root of the 
 entire tree.  A reference to the root is necessary for the walk_tree method to 
 
+
 TODO:
-* Implement walk_tree function.  Should this be a method in the class, or an external function?
-* Implement delete_tree or whatever needs to be done to remove a node in the tree.  Also determine
-  what that even means
+* Write a few methods or test to help visualize the tree structure
+* Figure out where error handling is needed and write it.
+* Implement delete_node or whatever needs to be done to remove a node in the tree.  Also determine
+  what that even means.  Maybe a delete_subtree is also necessary.  Think about it.
 * Set up certain characters that need to create a new term, and thus subtree (like +, *, /, etc) 
 """
 
@@ -31,6 +33,8 @@ class Observable(object):
     def add_observer(self, callback):
         """
         An observer here is just a callback function to call when the variable changes 
+
+        
         """
         self.observers.append(callback)
     def notify_observers(self):
@@ -51,10 +55,11 @@ class SiblingTree(object):
                  right_sibling=None):
         self.data = data
         self.parent = parent
-        self.root = root
+        #self.root = root
         self.left_child = left_child
         self.right_sibling = right_sibling
         self.left_sibling = left_sibling
+
     def insert_child(self, new_data):
         if self.left_child == None:
             self.left_child = SiblingTree(new_data)
@@ -63,6 +68,8 @@ class SiblingTree(object):
                                    left_child=self.left_child)
             self.left_child.parent = new_tree
             self.left_child = new_tree
+        return self.left_child
+
     # maybe this class definition should have an insert_left_sibling method for the sake of completeness,
     # even though it won't be used by the PrettyMath class 
     def insert_right_sibling(self, new_data):
@@ -77,7 +84,22 @@ class SiblingTree(object):
                                    parent=self.parent)
             self.right_sibling.left_sibling = new_tree
             self.right_sibling = new_tree
-            
+        return self.right_sibling
+    
+    def walk_tree(self):
+        # Walk left_child's until there are no more, extending the list along the way,
+        # then right siblings, then parent's right siblings
+        result = self.data
+        if self.left_child != None:
+            result.extend(self.left_child.walk_tree())
+        elif self.right_sibling != None:
+            result.extend(self.right_sibling.walk_tree())
+        elif self.parent == None:
+            return result
+        elif self.parent.right_sibling != None:
+            result.extend(self.parent.right_sibling.walk_tree())
+        return result
+
 
 class PrettyMath(Observable, SiblingTree):
     """
@@ -89,10 +111,12 @@ class PrettyMath(Observable, SiblingTree):
         # Need to do a little more research, but for now this works.  It might even be best:
         Observable.__init__(self)
         # It's important to explicitly pass root=self.root as an argument when creating a subtree
+        """
         if root == None:
             # If not specified, this is a new tree and the root is itself.  Basically makes the argument list
             # for __init__: root=self.root but avoids the problem of self not being defined yet
             root = self
+        """
         SiblingTree.__init__(self, data=data, root=root)
         
         # Put cursor at end of data list
@@ -100,8 +124,9 @@ class PrettyMath(Observable, SiblingTree):
         # we do it really ghetto:
         # TODO:  Make sure this works right in all cases, especially when starting a new subtree.
         # I think it will work, but need to spend some time thinking about it.
-        self.root.cursor_in_tree = self
         self.cursor_index = len(self.data) - 1
+        # active_node keeps track of which node in the tree is currently being edited/actually contains the cursor
+        self.active_node = self
         
         # Eventually, these will probably be implemented differently:
         self.TRANSLATE_KEYCODE = {RIGHT : move_cursor,
@@ -118,26 +143,14 @@ class PrettyMath(Observable, SiblingTree):
     def __str__(self):
         return ''.join(self.data)
 
+    def reset(self):
+        # TODO: make this work
+        pass
+      
     def get_latex(self):
         # Just put '$'s around the string so that matplotlib prints it as LaTeX math
-        # eventually will return something like '$' + str(self.root.walk_tree()) + '$' or
-        # whatever it needs to be
-        return '$' + str(self) + '$'
+        return '$' + ''.join(self.root.walk_tree()) + '$'
 
-    def walk_tree(self):
-        # Walk left_child's until there are no more, extending the list along the way,
-        # then right siblings, then parent's right siblings
-        result = self.data
-        if self.left_child != None:
-            result.extend(self.left_child.walk_tree())
-        elif self.right_sibling != None:
-            result.extend(self.right_sibling.walk_tree())
-        elif self.parent.right_sibling != None:
-            result.extend(self.parent.right_sibling.walk_tree())
-        else:
-            return
-        
-    
     def add_keypress(self, newkey):
         if newkey.keycode in self.TRANSLATE_KEYCODE:
             self.TRANSLATE_KEYCODE[newkey.keycode](self, newkey.keycode)
@@ -162,13 +175,26 @@ class PrettyMath(Observable, SiblingTree):
 
         #if newkey.char in SPECIAL_CHARS:
             # start a new subtree for a new term:
-            
+        # This is just a simplistic way to do it for testing porpoises
+        if newkey.char in '+-*/':
+            # Something is still going wrong here
+            x = self.insert_child([newkey.char, CURSOR])
+            x.cursor_index = len(x.data)
+            del self.data[self.cursor_index] 
+            self.root.active_node = x
+            return
                 
         # If there's nothing special that needs to be done with the new keypress, these next few lines
         # just insert the character where the cursor is and move the cursor to the right by one:
-        self.data.insert(self.cursor_index, newkey.char)
-        self.cursor_index += 1
+        # I wonder if there's a cleaner way to do this:
+        self.root.active_node.data.insert(self.root.active_node.cursor_index, newkey.char)
+        self.root.active_node.cursor_index += 1
 
+        """
+        NOTE:
+        when making a new subtree, the data passed to it must be a LIST or else a type error
+        is thrown in walk_tree
+        """
 
         # Check to see if the end part of running_list is something meaningful in LaTeX:
         command = self.check_for_latex_command(str(self))
