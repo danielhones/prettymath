@@ -14,6 +14,8 @@ entire tree.  A reference to the root is necessary for the walk_tree method to
 
 TODO:
 * Implement walk_tree function.  Should this be a method in the class, or an external function?
+* Implement delete_tree or whatever needs to be done to remove a node in the tree.  Also determine
+  what that even means
 * Set up certain characters that need to create a new term, and thus subtree (like +, *, /, etc) 
 """
 
@@ -123,10 +125,18 @@ class PrettyMath(Observable, SiblingTree):
         return '$' + str(self) + '$'
 
     def walk_tree(self):
-        # TODO: get this right
-        # Walk left_child's until there are no more, accumulating the string along the way,
-        # then right siblings, and back up parents to the top.  Think this one through before starting
-        return
+        # Walk left_child's until there are no more, extending the list along the way,
+        # then right siblings, then parent's right siblings
+        result = self.data
+        if self.left_child != None:
+            result.extend(self.left_child.walk_tree())
+        elif self.right_sibling != None:
+            result.extend(self.right_sibling.walk_tree())
+        elif self.parent.right_sibling != None:
+            result.extend(self.parent.right_sibling.walk_tree())
+        else:
+            return
+        
     
     def add_keypress(self, newkey):
         if newkey.keycode in self.TRANSLATE_KEYCODE:
