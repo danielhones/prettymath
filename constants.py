@@ -26,42 +26,41 @@ def flatten(nested):
             result.append(i)
     return result
 
-# Define constants for keycodes across different platforms.
+# Define constants for keycodes across different platforms.  These are all tuples, even the ones that have
+# only one value so that we can use syntax like 'if keypress in SHIFT' without having to check first to see
+# that SHIFT is iterable
 if platform.system() == 'Darwin':
     SHIFT       = (131074, 131076, 131330, 131332)
     SUPER       = (1048584, 1048592)
     CONTROL     = (262145, 270336)
     ALT         = (524320, 524352)
-    CAPS_LOCK   = 65536
-    HOME        = 65360
-    END         = 65367
-    PAGE_UP     = 7665452       # keysym 'Prior' in OS X
-    PAGE_DOWN   = 7993133       # keysym 'Next' 
-    BACKSPACE   = 3342463       # keysym 'BackSpace' 
-    DELETE      = 7730984
-    LEFT        = 8124162
-    RIGHT       = 8189699
-    UP          = 8320768
-    DOWN        = 8255233
+    CAPS_LOCK   = (65536,)
+    HOME        = (65360,)
+    END         = (65367,)
+    PAGE_UP     = (7665452,)       # keysym 'Prior' in OS X
+    PAGE_DOWN   = (7993133,)       # keysym 'Next' 
+    BACKSPACE   = (3342463,)       # keysym 'BackSpace' 
+    DELETE      = (7730984,)
+    LEFT        = (8124162,)
+    RIGHT       = (8189699,)
+    UP          = (8320768,)
+    DOWN        = (8255233,)
 elif platform.system() == 'Linux':
     SHIFT       = (50, 62)
-    SUPER       = 133
+    SUPER       = (133,)
     CONTROL     = (37, 105)
     ALT         = (64, 108)
-    CAPS_LOCK   = 66
-    HOME        = 110
-    END         = 115
-    PAGE_UP     = 112           # keysym 'Prior' in Linux
-    PAGE_DOWN   = 117           # keysym 'Next'
-    BACKSPACE   = 22            # keysym 'BackSpace'
-    DELETE      = 119
-    LEFT        = 113
-    RIGHT       = 114
-    UP          = 111
-    DOWN        = 116
-    
-    
-    
+    CAPS_LOCK   = (66,)
+    HOME        = (110,)
+    END         = (115,)
+    PAGE_UP     = (112,)           # keysym 'Prior' in Linux
+    PAGE_DOWN   = (117,)           # keysym 'Next'
+    BACKSPACE   = (22,)            # keysym 'BackSpace'
+    DELETE      = (119,)
+    LEFT        = (113,)
+    RIGHT       = (114,)
+    UP          = (111,)
+    DOWN        = (116,)
 # Define also for Windows
 
 

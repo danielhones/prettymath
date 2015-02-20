@@ -14,11 +14,12 @@ entire tree.  A reference to the root is necessary for the walk_tree method to
 
 
 TODO:
+* Decide how to implement mapping keypresses to function calls
+* Start thinking about how to translate the tree into a valid Python expression
 * Write a few methods or test to help visualize the tree structure
-* Figure out where error handling is needed and write it.
+* Figure out where error handling is needed and write it (maybe ensure that data is always a list?).
 * Implement delete_node or whatever needs to be done to remove a node in the tree.  Also determine
   what that even means.  Maybe a delete_subtree is also necessary.  Think about it.
-* Set up certain characters that need to create a new term, and thus subtree (like +, *, /, etc) 
 """
 
 # These may no longer be necessary:
@@ -89,7 +90,10 @@ class SiblingTree(object):
     def walk_tree(self):
         # Walk left_child's until there are no more, extending the list along the way,
         # then right siblings, then parent's right siblings
-        result = self.data
+
+        # It is VERY important here to make result a COPY of self.data, rather than a reference to
+        # it.  Otherwise, the list self.data gets mutated by this method.
+        result = self.data[:]   # copy, not reference
         if self.left_child != None:
             result.extend(self.left_child.walk_tree())
         elif self.right_sibling != None:
@@ -99,6 +103,10 @@ class SiblingTree(object):
         elif self.parent.right_sibling != None:
             result.extend(self.parent.right_sibling.walk_tree())
         return result
+
+    def __str__(self):
+        # This can be deleted probably, it's just for debugging
+        return ''.join(self.data)
 
 
 class PrettyMath(Observable, SiblingTree):
@@ -149,7 +157,8 @@ class PrettyMath(Observable, SiblingTree):
       
     def get_latex(self):
         # Just put '$'s around the string so that matplotlib prints it as LaTeX math
-        return '$' + ''.join(self.root.walk_tree()) + '$'
+        #return '$' + ''.join(self.root.walk_tree()) + '$'
+        return '$' + ''.join(self.walk_tree()) + '$'
 
     def add_keypress(self, newkey):
         if newkey.keycode in self.TRANSLATE_KEYCODE:
@@ -176,19 +185,20 @@ class PrettyMath(Observable, SiblingTree):
         #if newkey.char in SPECIAL_CHARS:
             # start a new subtree for a new term:
         # This is just a simplistic way to do it for testing porpoises
-        if newkey.char in '+-*/':
+        if newkey.char in '+-*/=':
             # Something is still going wrong here
-            x = self.insert_child([newkey.char, CURSOR])
-            x.cursor_index = len(x.data)
-            del self.data[self.cursor_index] 
-            self.root.active_node = x
+            del self.active_node.data[self.active_node.cursor_index] # remove cursor
+            self.active_node = self.active_node.insert_child([newkey.char, CURSOR])
+            self.active_node.cursor_index = len(self.active_node.data) - 1 
             return
                 
         # If there's nothing special that needs to be done with the new keypress, these next few lines
         # just insert the character where the cursor is and move the cursor to the right by one:
         # I wonder if there's a cleaner way to do this:
-        self.root.active_node.data.insert(self.root.active_node.cursor_index, newkey.char)
-        self.root.active_node.cursor_index += 1
+        #self.root.active_node.data.insert(self.root.active_node.cursor_index, newkey.char)
+        #self.root.active_node.cursor_index += 1
+        self.active_node.data.insert(self.active_node.cursor_index, newkey.char)
+        self.active_node.cursor_index += 1
 
         """
         NOTE:
