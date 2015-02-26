@@ -78,10 +78,6 @@ SPECIAL_CHARS = r'=+-*/(^'
 SPECIAL_KEYCODES = {BACKSPACE: '',
                     DELETE: ''}
 
-
-# String that's used for the cursor symbol
-CURSOR = r'|'
-
 # Once get a complete list of keycodes for windows and linux, can erase this.  These are Linux:
 IGNORE_THESE_KEYSYMS = ['Shift_L', 'Shift_R', 'Alt_L', 'Alt_R', 'Control_L', 'Control_R', 'Space']
 
