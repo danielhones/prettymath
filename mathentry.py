@@ -15,6 +15,10 @@ to the root of the tree is necessary.
 
 
 TODO:
+* Write unit tests
+* Reconfigure it so that terms that are at the same level of 'nestedness' are on the same level of the tree.
+  For example, a + or - or = should create a new node in the tree that is a right sibling of the current node,
+  rather than a child as is the case now.
 * Some stuff is really weird and broken now (ie, typing +, -, cos, sin). Fix it
 * Start thinking about how to translate the tree into a valid Python expression
 * Write a few methods to help visualize the tree structure
@@ -29,6 +33,7 @@ TODO:
 # way to do it.
 from constants import *
 import keybindings
+from pprint import pprint
 
 class Observable(object):
     def __init__(self):
@@ -36,8 +41,6 @@ class Observable(object):
     def add_observer(self, callback):
         """
         An observer here is just a callback function to call when the variable changes 
-
-        
         """
         self.observers.append(callback)
     def notify_observers(self):
@@ -125,8 +128,24 @@ class SiblingTree(object):
             result.extend(self.parent.right_sibling.walk_tree())
         return result
 
+    def print_tree(self, indent=''):
+        # How much each level is indented:
+        spaces = '   '
+        print indent + str(self)
+        if self.left_child != None:
+            self.left_child.print_tree(indent=indent+spaces)
+        elif self.right_sibling != None:
+            self.right_sibling.print_tree(indent=indent)
+        elif self.parent == None:
+            return
+        elif self.parent.right_sibling != None:
+            # Since we move up a level, we remove a set of spaces from indent.  Since we can't use 
+            # indent - spaces, we just pass indent with one less 'spaces' indexed:
+            self.parent.right_sibling.print_tree(indent=indent[len(spaces):])
+        else:
+            return
+
     def __str__(self):
-        # This can be deleted probably, it's just for debugging
         return ''.join(self.data)
 
 
@@ -243,6 +262,8 @@ class PrettyMath(Observable, SiblingTree):
         self.active_node.cursor_index = self.cursor_index
         # This should be the last thing we do:
         self.notify_observers()
+        self.print_tree()
+        print
 
 
     def check_for_latex_command(self, string):
