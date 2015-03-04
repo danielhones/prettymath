@@ -7,20 +7,22 @@ MIT License
 This file contains definitions for functions that PrettyMath objects use to handle keypresses.
 """
 
-            
+def erase_cursor(node):
+    del node.data[node.root.cursor_index]       
 
 def insert_char(node, newkey):
     # node is the active node of the PrettyMath object, char is the new character to add to it
     node.data.insert(node.cursor_index, newkey.char)
     node.running_list.append(newkey.char)
-    node.cursor_index += 1
+    node.root.cursor_index += 1
     return
 
 def new_term(node, newkey):
     # When making a new subtree, the data passed to it must be a LIST or else a type error
     # is thrown in walk_tree
-    del node.data[node.root.cursor_index] 
-    node.active_node = node.insert_child([newkey.char, node.CURSOR])
+    erase_cursor(node)
+    operator = node.insert_rightsibling([newkey.char]) 
+    node.root.active_node = operator.insert_rightsibling([node.CURSOR])
     node.root.cursor_index = len(node.active_node.data) - 1 
     return
 

@@ -10,30 +10,24 @@ functions and classes.
 The PrettyMath class uses a tree data structure to store the LaTeX formatted math.  The tree uses
 left child, right sibling representation.  Each node links to its parent, its left sibling, and its
 right sibling.  'self' in the PrettyMath class definition always refers to the root of the tree, and 
-the node that is currently being edited (contains the cursor) is self.active_node.  Therefore, no reference
-to the root of the tree is necessary.
+the node that is currently being edited (contains the cursor) is self.active_node.  
 
 
 TODO:
 * Write unit tests
-* Reconfigure it so that terms that are at the same level of 'nestedness' are on the same level of the tree.
-  For example, a + or - or = should create a new node in the tree that is a right sibling of the current node,
-  rather than a child as is the case now.
-* Some stuff is really weird and broken now (ie, typing +, -, cos, sin). Fix it
 * Start thinking about how to translate the tree into a valid Python expression
-* Write a few methods to help visualize the tree structure
 * Figure out where error handling is needed and write it (maybe ensure that data is always a list of strings?).
 * Implement delete_node or whatever needs to be done to remove a node in the tree.  Also determine
-  what that even means.  Maybe a delete_subtree is also necessary.  Think about it.
+  what that even means.  Maybe a delete_subtree is also necessary.  Think about it.  Maybe a delete_subtree method
+  and a delete_node_and_subtree method are needed.  Deleting just a node and not its subtree if it has one is pretty
+  much useless and will just leave unused but still referenced objects floating around.
 """
 
-# These may no longer be necessary:
-#from translate_functions import *  
 # The only thing we use from constants now is LATEX_COMMANDS, so there is probably a neater
 # way to do it.
 from constants import *
 import keybindings
-from pprint import pprint
+
 
 class Observable(object):
     def __init__(self):
@@ -71,18 +65,19 @@ class SiblingTree(object):
 
     def insert_child(self, new_data):
         if self.left_child == None:
-            self.left_child = SiblingTree(new_data, root=self.root)
+            self.left_child = SiblingTree(new_data, root=root, parent=self)
         else:
             new_tree = SiblingTree(new_data,
                                    left_child=self.left_child,
-                                   root=self.root)
+                                   root=self.root,
+                                   parent=self)
             self.left_child.parent = new_tree
             self.left_child = new_tree
         return self.left_child
 
     # maybe this class definition should have an insert_left_sibling method for the sake of completeness,
     # even though it won't be used by the PrettyMath class 
-    def insert_right_sibling(self, new_data):
+    def insert_rightsibling(self, new_data):
         if self.right_sibling == None:
             self.right_sibling = SiblingTree(new_data,
                                              left_sibling=self,
@@ -156,12 +151,24 @@ class PrettyMath(Observable, SiblingTree):
     """
     CURSOR = r'|'
 
-    def __init__(self, data=[CURSOR], root=None):
-        # Not sure yet how to handle init since PrettyMath inherits from two classes.
-        # Need to do a little more research, but for now this works.  It might even be best:
+    def __init__(self, 
+                 data=[CURSOR], 
+                 parent=None,
+                 left_child=None,
+                 left_sibling=None,
+                 right_sibling=None,
+                 root=None):
+
+        # Not sure yet how to handle super.init since PrettyMath inherits from two classes.
+        # Need to do a little more research, but for now this works:  
         Observable.__init__(self)
-        SiblingTree.__init__(self, data=data, root=root)
-        
+        SiblingTree.__init__(self,
+                             data=data,
+                             root=root,
+                             left_child=left_child,
+                             left_sibling=left_sibling,
+                             right_sibling=right_sibling)
+
         # Put cursor at end of data list
         # Eventually, the MathEntry widget will draw the cursor on the canvas.  But for now,
         # we do it really ghetto:
@@ -185,7 +192,7 @@ class PrettyMath(Observable, SiblingTree):
 
     # maybe this class definition should have an insert_left_sibling method for the sake of completeness,
     # even though it won't be used by the PrettyMath class 
-    def insert_right_sibling(self, new_data):
+    def insert_rightsibling(self, new_data):
         if self.right_sibling == None:
             self.right_sibling = PrettyMath(new_data,
                                             left_sibling=self,
@@ -205,9 +212,31 @@ class PrettyMath(Observable, SiblingTree):
     def __str__(self):
         return ''.join(self.data)
 
+    def clear_attributes(self):
+        """
+        Set attributes to None so that there are no references to unused, unreachable objects
+        """
+        # TODO: Figure out answer to this question:
+        # Right now this is pretty much identical to __init__. 
+        # Why does it work when calling self.__init__() doesn't?
+        self.left_sibling = None
+        self.right_sibling = None
+        self.parent = None
+        self.left_child = None
+        self.data = [self.CURSOR]
+        self.active_node = self
+        self.cursor_index = 0
+
     def reset(self):
-        # TODO: make this work
-        pass
+        if self.left_child:
+            self.left_child.reset()
+        elif self.right_sibling:
+            self.right_sibling.reset()
+        if self.parent and self.parent.right_sibling:
+            self.parent.right_sibling.reset()
+        
+        self.clear_attributes()
+        return
       
     def get_latex(self):
         # Just put '$'s around the string so that matplotlib prints it as LaTeX math
@@ -222,20 +251,6 @@ class PrettyMath(Observable, SiblingTree):
             return
         else:
             func(self.active_node, newkey)
-
-        #if newkey.char in SPECIAL_CHARS:
-            # start a new subtree for a new term:
-        # This is just a simplistic way to do it for testing porpoises
-        """
-        if newkey.char in '+-*/=':
-        """        
-        # If there's nothing special that needs to be done with the new keypress, these next few lines
-        # just insert the character where the cursor is and move the cursor to the right by one:
-        # I wonder if there's a cleaner way to do this:
-        # Can delete very soon:
-        #self.active_node.data.insert(self.active_node.cursor_index, newkey.char)
-        #self.active_node.cursor_index += 1
-
 
         # Check to see if the end part of running_list is something meaningful in LaTeX:
         command = self.check_for_latex_command(''.join(self.active_node.running_list))
@@ -262,6 +277,7 @@ class PrettyMath(Observable, SiblingTree):
         self.active_node.cursor_index = self.cursor_index
         # This should be the last thing we do:
         self.notify_observers()
+        print 'cursor index =', self.cursor_index
         self.print_tree()
         print
 
