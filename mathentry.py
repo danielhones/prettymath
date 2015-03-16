@@ -113,16 +113,26 @@ class SiblingTree(object):
         # It is VERY important here to make result a COPY of self.data, rather than a reference to
         # it.  Otherwise, the list self.data gets mutated by this method.
         result = self.data[:]   # copy, not reference
-        if self.left_child != None:
+        if self.left_child:
             result.extend(self.left_child.walk_tree())
-        elif self.right_sibling != None:
+        elif self.right_sibling:
             result.extend(self.right_sibling.walk_tree())
         elif self.parent == None:
             return result
         elif self.parent.right_sibling != None:
             result.extend(self.parent.right_sibling.walk_tree())
         return result
-
+        
+    def count_nodes(self):
+        if self.left_child:
+            return self.left_child.count_nodes() + 1
+        elif self.right_sibling:
+            return self.right_sibling.count_nodes() + 1
+        elif self.parent and self.parent.right_sibling:
+            return self.parent.right_sibling.count_nodes() + 1
+        else:
+            return 1
+        
     def print_tree(self, indent=''):
         # How much each level is indented:
         spaces = '   '
