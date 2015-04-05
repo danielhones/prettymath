@@ -8,7 +8,7 @@ This file defines the PrettyMath class and MathEntryWidget class, along with som
 functions and classes.
 
 The PrettyMath class uses a tree data structure to store the LaTeX formatted math.  The tree uses
-left child, right sibling representation.  Each node links to its parent, its left sibling, and its
+
 right sibling.  'self' in the PrettyMath class definition always refers to the root of the tree, and 
 the node that is currently being edited (contains the cursor) is self.active_node.  
 
@@ -132,6 +132,29 @@ class SiblingTree(object):
             return self.parent.right_sibling.count_nodes() + 1
         else:
             return 1
+
+    def tree_repr(self, string='', indent=''):
+        """
+        return a string representing the tree structure.  Just like print_tree but returns a string
+        instead of printing the result 
+
+        TODO: whiteboard this and get it working right
+        """
+        spaces = '   '
+        s = string + indent + str(self) + '\n'
+        
+        if self.left_child != None:
+            pass
+        elif self.right_sibling != None:
+            pass
+        elif self.parent == None:
+            pass
+        elif self.parent.right_sibling != None:
+            # Since we move up a level, we remove a set of spaces from indent.  Since we can't use 
+            # indent - spaces, we just pass indent with one less 'spaces' indexed:
+            pass
+        else:
+            pass
         
     def print_tree(self, indent=''):
         # How much each level is indented:

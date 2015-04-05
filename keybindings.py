@@ -51,10 +51,19 @@ BINDINGS = {'/'         : insert_frac,
             ')'         : close_parens,
             '^'         : insert_superscript,
             '_'         : insert_subscript,
-            r'\\'       : backslash,
+            '\\'       : backslash,
             'plus'      : new_term, # need to make sure these are same crossplatform
             'minus'     : new_term,
             'equal'     : new_term}
+
+for keysym in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890':
+    BINDINGS[keysym] = insert_char
+
+def new_binding(keysym, new_function):
+    """
+    Could have problems depending on where new_function is defined
+    """
+    BINDINGS[keysym] = new_function
 
 def get_function_for(keysym, char, state):
     # Returns the function that PrettyMath object needs to call to handle the new keypress.

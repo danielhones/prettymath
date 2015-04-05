@@ -18,10 +18,12 @@ class entry_gui(Tk):
 
 def key(event):
     equation.add_keypress(event)
+    """
     s = ''.join(equation.root.walk_tree()) + '\n\nLatex:\n\t'
     s += equation.get_latex()
     #s += ['\nRaw:\t\t', str(equation.raw),'\nGet raw_eq:\t',equation.get_raw()]
-    pretty['text'] = s
+    """
+    pretty['text'] = equation.tree_repr()
 
 def clear(*args):
     entry_string.set('')
