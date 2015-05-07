@@ -7,11 +7,6 @@ MIT License
 This file defines the PrettyMath class and MathEntryWidget class, along with some other utility 
 functions and classes.
 
-The PrettyMath class uses a tree data structure to store the LaTeX formatted math.  The tree uses
-
-right sibling.  'self' in the PrettyMath class definition always refers to the root of the tree, and 
-the node that is currently being edited (contains the cursor) is self.active_node.  
-
 
 TODO:
 * Come up with solid plan for data structure (Atom class and others) and implement it.
@@ -46,12 +41,12 @@ LATEX_COMMANDS_WITH_ARGS = {
     'sqrt': (2, '', '[]'),
     'log': (2, '', '_{}'),
     'ln': (1, '', '{}'),
-    'lg': (1, '', '{}')
+    'lg': (1, '', '{}'),
 }
 
 # These commands (including Greek letters) take no arguments, just get a backslash before
 # them to turn them into LaTeX commands.
-LATEX_COMMANDS_NO_ARGS = [
+LATEX_COMMANDS_WITHOUT_ARGS = [
     'sin',
     'cos',
     'tan',
@@ -60,7 +55,7 @@ LATEX_COMMANDS_NO_ARGS = [
     'csc',
     'arcsin',
     'arccos',
-    'arctan'
+    'arctan',
 ]
 
 greek_letters = [
@@ -86,10 +81,10 @@ greek_letters = [
     'phi', 'varphi', 'Phi',
     'chi',
     'psi', 'Psi',
-    'omega', 'Omega'
+    'omega', 'Omega',
 ]
 
-LATEX_COMMANDS_NO_ARGS.extend(greek_letters)
+LATEX_COMMANDS_WITHOUT_ARGS.extend(greek_letters)
     
 def insert_latex_command(expr, newkey):
     (num_args, special, arg_char) = LATEX_COMMANDS_WITH_ARGS[newkey.keysym]
@@ -127,56 +122,66 @@ def backslash(expr, newkey):
 
 # These next few things set up key bindings that map keypresses to the functions that need to be
 # called to handle them.
-NUMPAD_STATE = (32,) # This is a tuple in case other OSes have other states for numpad keys.  32 is for OS X
+NO_MOD_KEY = 0
+ON_NUMPAD = 32
 BINDINGS = {
-    ('/', 0)      : insert_latex_command,
-    ('(', 0)      : open_parens,  
-    (')', 0)      : close_parens,
-    ('^', 0)      : insert_latex_command,
-    ('_', 0)      : insert_latex_command,
-    ('\\', 0)     : backslash,
-    ('plus', 0)   : new_term,
-    ('minus', 0)  : new_term,
-    ('equal', 0)  : new_term,
-    ('plus', 32)  : new_term,
-    ('minus', 32) : new_term,
-    ('equal', 32) : new_term
+    ('/', NO_MOD_KEY) : insert_latex_command,
+    ('(', NO_MOD_KEY) : open_parens,  
+    (')', NO_MOD_KEY) : close_parens,
+    ('^', NO_MOD_KEY) : insert_latex_command,
+    ('_', NO_MOD_KEY) : insert_latex_command,
+    ('\\', NO_MOD_KEY) : backslash,
+    ('plus', NO_MOD_KEY) : new_term,
+    ('minus', NO_MOD_KEY) : new_term,
+    ('equal', NO_MOD_KEY) : new_term,
+    ('plus', ON_NUMPAD) : new_term,
+    ('minus', ON_NUMPAD) : new_term,
+    ('equal', ON_NUMPAD) : new_term,
 }
 
 for keysym in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890':
-    BINDINGS[(keysym, 0)] = insert_char # just insert the character like normal typing
-    # NUMPAD_STATE is the state for keys on the number pad:
-    for i in NUMPAD_STATE:
-        BINDINGS[(keysym, i)] = insert_char
+    BINDINGS[(keysym, NO_MOD_KEY)] = insert_char
+    BINDINGS[(keysym, ON_NUMPAD)] = insert_char
         
-def new_binding(keysym, state, new_function):
+def new_binding(keysym, modifier, new_function):
     """
     I think maybe this should be defined inside the PrettyExpression class definition
     """
-    BINDINGS[(keysym, state)] = new_function
+    BINDINGS[(keysym, modifier)] = new_function
         
-def get_function_for(keysym, state):
+def get_function_for(keysym, modifier):
     # Returns the function that PrettyMath object needs to call to handle the new keypress.
     # Returns None if the keypress should be ignored
     # keysym and char are strings; state is an int
-    if (keysym, state) in BINDINGS:
-        return BINDINGS[(keysym, state)]
+    if (keysym, modifier) in BINDINGS:
+        return BINDINGS[(keysym, modifier)]
     else:
         # key doesn't have a binding
         return None
 
     
-class Operator(object):
+class DataContainer(object):
+    def __init__(self, data=None):
+        self.data = [data]
+        
+    def get_data(self):
+        return [item.get_data() for item in self.data]
+    
+    
+class Operator(DataContainer):
     def __init__(self):
         pass
     def get_data(self):
         # Return as a list so that functions that call this one can .extend it to a list:
         return [self.data]
 
-class Operand(object):
+    
+class Operand(DataContainer):
     def __init__(self, data=None):
-        pass
+        self.data = data
+        return self
 
+    
 class LatexCommand(object):
     def __init__(self, cmd='', args=0, first_arg_char=None):
         if cmd == '/':
@@ -204,19 +209,24 @@ class LatexCommand(object):
 
 
 class Argument(Operand):
+    def set_enclosing_chars(self, chars):
+        # May not be necessary, but it could be handy to hold onto the enclosing characters separately
+        # from their place in self.data
+        self.enclosing_chars = chars 
+        if len(chars) > 2:
+            self.data[0] = chars[0:2]
+        else:
+            self.data[0] = chars[0]
+        self.data.append(chars[-1])
+
     def  __init__(self, enclosing_chars='{}'):
         super(Argument, self).__init__()
-        self.enclosing_chars = enclosing_chars
+        self.set_enclosing_chars(enclosing_chars)
         return self
 
-    def set_enclosing_chars(self, chars):
-        self.enclosing_chars = chars
-
-    def get_data(self):
-        return
 
 
-class PrettyExpression(Observable):
+class PrettyExpression(DataContainer):
     """
     This class has two main attributes: raw, which is a valid Python math expression, and latex
     which is that expression formatted to look nice in Latex.  It's sort of the container or root
@@ -274,7 +284,7 @@ class PrettyExpression(Observable):
                 # TODO:
                 # Figure out what needs to be returned or done here and in the next block:
                 pass
-            elif string[-i:] in LATEX_COMMANDS_NO_ARGS:
+            elif string[-i:] in LATEX_COMMANDS_WITHOUT_ARGS:
                 pass
         return None
         
