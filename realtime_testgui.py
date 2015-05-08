@@ -7,7 +7,7 @@ add a second label to display raw_eq to insure it is equal to what latex_eq is d
 
 from Tkinter import *
 import ttk
-import mathentry
+from prettymath.prettyexpression import PrettyExpression
 import matplotlib
 matplotlib.use('TkAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
@@ -18,12 +18,14 @@ from matplotlib.figure import Figure
 root = Tk()
 root.title("Embedding in TK")
 
-def update(event):
-    equation.add_keypress(event)
+def update(*args):
     f.clear()
     # ha and va are horizontal and vertical alignment, respectively:
     f.text(.5, .5, equation.get_latex(), size='x-large', ha='center', va='center')
     canvas.show()
+
+def add_key(event):
+    equation.add_keypress(event)
 
 def clear(*args):
     equation.reset()
@@ -34,7 +36,8 @@ def clear(*args):
 f = Figure(figsize=(5,3), dpi=100, facecolor='white')
 
 entry_string = StringVar()
-equation = mathentry.PrettyMath()
+equation = PrettyExpression()
+equation.add_observer(update)
 
 canvas = FigureCanvasTkAgg(f, master=root)
 canvas.show()
@@ -48,7 +51,9 @@ button = Button(root, text='Clear', command=clear)
 button.pack(side=BOTTOM)
 
 entry.bind('<Return>', clear)
-entry.bind('<Key>', update)
+entry.bind('<Key>', add_key)
 entry.focus()
+
+update()
 
 root.mainloop()
