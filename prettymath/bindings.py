@@ -46,11 +46,26 @@ def backslash(expr, newkey):
 def new_term():
     pass
 
+def do_nothing(*args, **kwargs):
+    pass
+
 # These next few things set up key bindings that map keypresses to the functions that need to be
 # called to handle them.
 NO_MOD_KEY = 0
 SHIFT = 1
 ON_NUMPAD = 32
+
+"""
+TODO:
+There's a cleaner way to do this, especially since it will get cluttered and shitty when adding all
+the different modifier key names for cross platform support.  Consider changing it to something like,
+'/' through 'equal' is the same below, then add the do_nothing's by checking the OS, and having a list 
+of modifier keysym names for each OS.  Then use something like:
+
+get(OS_specific_modifier_keysym)
+for i in OS_specific_modifier_keysym:
+    BINDINGS[i] = do_nothing
+"""
 BINDINGS = {
     ('/', NO_MOD_KEY) : insert_latex_command,
     ('slash', NO_MOD_KEY): insert_latex_command,
@@ -65,6 +80,12 @@ BINDINGS = {
     ('plus', ON_NUMPAD) : new_term,
     ('minus', ON_NUMPAD) : new_term,
     ('equal', ON_NUMPAD) : new_term,
+    ('Shift_L', NO_MOD_KEY): do_nothing,
+    ('Shift_R', NO_MOD_KEY): do_nothing,
+    ('Control_L', NO_MOD_KEY): do_nothing,
+    ('Control_R', NO_MOD_KEY): do_nothing,
+    ('Alt_L', NO_MOD_KEY): do_nothing,
+    ('Alt_R', NO_MOD_KEY): do_nothing,
 }
 
 for keysym in string.ascii_lowercase:
@@ -82,9 +103,10 @@ def get_function_for(keysym, modifier):
     if (keysym, modifier) in BINDINGS:
         return BINDINGS[(keysym, modifier)]
     else:
-        return None
+        raise NoFunctionForKey('The key %s with state %s does not have an associated function' % (keysym, modifier))
 
-
+class NoFunctionForKey(Exception):
+    pass
 
 
 

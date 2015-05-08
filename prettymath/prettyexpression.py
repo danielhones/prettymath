@@ -13,15 +13,12 @@ class Observable(object):
     def __init__(self):
         self.observers = []
     def add_observer(self, callback):
-        """
-        An observer here is just a callback function to call when the variable changes 
-        """
         self.observers.append(callback)
     def notify_observers(self):
         for callback in self.observers:
             callback(self)
 
-            
+
 class PrettyExpression(Observable):
     """
     This class has two main attributes: raw, which is a valid Python math expression, and latex
@@ -34,11 +31,6 @@ class PrettyExpression(Observable):
         super(PrettyExpression, self).__init__()
         initial_item = DataContainer(data=self.CURSOR)
         self.data_items = [initial_item]
-        # Maybe implement the bindings so this works:
-        
-        # I'm torn as to whether it's better to keep track of the active item by pointing directly at the object
-        # or by keeping indexes in each object that points to the position in the data list where the active object
-        # or cursor is.
         self.active_item = initial_item
 
     def get_data(self):
@@ -57,26 +49,19 @@ class PrettyExpression(Observable):
         pass        
     
     def add_keypress(self, newkey):
-        func = bindings.get_function_for(newkey.keysym, newkey.state)
-
-        # TODO: change this to a try-catch block, by making get_function_for throw an exception
-        # if there is no binding for a key.
-        if func == None:
-            print 'None returned'
-            return
-        else:
+        try:
+            func = bindings.get_function_for(newkey.keysym, newkey.state)
             func(self, newkey)
-        
-        # Just a placeholder as a reminder:
+        except bindings.NoFunctionForKey as error:
+            print error
+        # Next line is just a placeholder as a reminder, change to proper implementation:
         self.check_for_latex_command('')
-
-        # This should be the last thing we do:
         self.notify_observers()
 
-    def new_binding(keysym, modifier, new_function):
-        # This may turn out to be useless. But the idea is that a user can customize their bindings
-        # for example maybe they want Ctrl+I to insert the integral sign or something.  They can
-        # write their own function to handle it then add the binding here
+    def new_binding((keysym, modifier), new_function):
+        # This may turn out to be useless. But the idea is that a user can customize their bindings,
+        # for example maybe they want Ctrl+I to insert the integral sign.  They can write their own
+        # function to handle it then add the binding here
         bindings.BINDINGS[(keysym, modifier)] = new_function
 
     def check_for_latex_command(self, string):
@@ -93,4 +78,4 @@ class PrettyExpression(Observable):
                 pass
             elif string[-i:] in LATEX_COMMANDS_WITHOUT_ARGS:
                 pass
-        return None
+        
