@@ -63,7 +63,7 @@ ON_NUMPAD = 32
 
 """
 TODO:
-There's a cleaner way to do this, especially since it will get cluttered and shitty when adding all
+There's a cleaner way to do this, especially since it will get cluttered when adding all
 the different modifier key names for cross platform support.  Consider changing it to something like,
 '/' through 'equal' is the same below, then add the do_nothing's by checking the OS, and having a list
 of modifier keysym names for each OS.  Then use something like:
