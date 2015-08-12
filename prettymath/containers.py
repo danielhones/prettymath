@@ -7,38 +7,43 @@ MIT License
 
 import latex_reference
 
+
 class DataContainer(object):
     def __init__(self, data=None):
-        self.data = [data]
+        self._data_items = [data]
         self.active_item = self
-        self.cursor_index = len(self.data) - 1
-        
-    def get_data(self):
+        self.cursor_index = len(self._data_items) - 1
+
+    @property
+    def data(self):
+        """Return a flattened list of _data_items contained by this object"""
         accumulated_data = []
-        for i in self.data:
+        for i in self._data_items:
             if type(i) is str:
                 accumulated_data.append(i)
             else:
-                accumulated_data.extend( i.get_data() )
+                accumulated_data.extend(i.data)
         return accumulated_data
-    
+
     def insert_at_cursor(self, char):
-        self.data.insert(self.cursor_index, char)
+        self._data_items.insert(self.cursor_index, char)
         self.cursor_index += 1
 
-        
-class Operator(DataContainer):
-    def __init__(self):
-        pass
-    def get_data(self):
-        # Return as a list so that functions that call this one can .extend it to a list:
-        return [self.data]
+    def new_term(self):
+        """Remove cursor, place it in a new DataContainer, and return the object"""
+        print "Got to new_term in DataContainer()"
+        del self._data_items[self.cursor_index]
+        return DataContainer(data=latex_reference.CURSOR)
 
-    
+
+class Operator(DataContainer):
+    pass
+
+
 class LatexCommand(DataContainer):
     def __init__(self, cmd='', args=0, first_arg_char=None):
         if cmd == '/':
-            self.command = r'\frac' # This is just a special case
+            self.command = r'\frac'  # This is just a special case
         else:
             self.command = cmd
 
@@ -51,7 +56,7 @@ class LatexCommand(DataContainer):
     def get_data(self):
         # This should be the LaTeX command itself, eg '\frac':
         accumulated_data = [self.command]
-        # Then accumulate the data from the arguments:
+        # Then accumulate the _data_items from the arguments:
         for arg in self.arguments:
             accumulated_data.extend( arg.get_data() )
         return accumulated_data
@@ -63,7 +68,7 @@ class LatexCommand(DataContainer):
 class Argument(DataContainer):
     def set_enclosing_chars(self, chars):
         # May not be necessary, but it could be handy to hold onto the enclosing characters separately
-        # from their place in self.data
+        # from their place in self._data_items
         if len(chars) > 2:
             self.left_enclosing_chars = chars[0:2]
         else:
@@ -76,6 +81,5 @@ class Argument(DataContainer):
 
     def get_data(self):
         accumulated_data = [self.left_enclosing_chars]
-        accumulated_data.extend( super(Argument, self).get_data )
         accumulated_data.append(self.right_enclosing_chars)
         return accumulated_data

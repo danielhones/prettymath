@@ -14,18 +14,20 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 from matplotlib.figure import Figure
 
 
-
 root = Tk()
-root.title("Embedding in TK")
+root.title("PrettyMath Test GUI")
+
 
 def update(*args):
     f.clear()
     # ha and va are horizontal and vertical alignment, respectively:
-    f.text(.5, .5, equation.get_latex(), size='x-large', ha='center', va='center')
+    f.text(.5, .5, equation.latex, size='x-large', ha='center', va='center')
     canvas.show()
+
 
 def add_key(event):
     equation.add_keypress(event)
+
 
 def clear(*args):
     equation.reset()
@@ -33,7 +35,8 @@ def clear(*args):
     f.clear()
     canvas.show()
 
-f = Figure(figsize=(5,3), dpi=100, facecolor='white')
+
+f = Figure(figsize=(5, 3), dpi=100, facecolor='white')
 
 entry_string = StringVar()
 equation = PrettyExpression()

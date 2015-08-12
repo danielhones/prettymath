@@ -2,7 +2,7 @@
 
 from Tkinter import *
 import ttk
-import mathentry
+from prettymath.prettyexpression import PrettyExpression
 
 """
 class entry_gui(Tk):
@@ -16,6 +16,7 @@ class entry_gui(Tk):
         self.initialize()
 """        
 
+
 def key(event):
     equation.add_keypress(event)
     """
@@ -25,18 +26,19 @@ def key(event):
     """
     pretty['text'] = equation.tree_repr()
 
+    
 def clear(*args):
     entry_string.set('')
     pretty['text'] = ''
     equation.reset()
-    
+
 
 root = Tk()
 root.title('Test GUI')
 
 # Make variables:
 entry_string = StringVar()
-equation = mathentry.PrettyMath()
+equation = PrettyExpression()
 
 # Create widgets:
 content_frame = ttk.Frame(root, padding=(5, 5, 5, 0))

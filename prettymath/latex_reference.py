@@ -12,6 +12,7 @@ LATEX_COMMANDS_WITH_ARGS = {
     '/': (2, 'active data', '{}'),
     'slash': (2, 'active data', '{}'),
     '^': (1, '', '{}'),
+    'asciicircum': (1, '', '{}'),
     '_': (1, '', '{}'),
     'sqrt': (2, '', '[]'),
     'log': (2, '', '_{}'),
@@ -60,3 +61,5 @@ greek_letters = [
 ]
 
 LATEX_COMMANDS_WITHOUT_ARGS.extend(greek_letters)
+
+CURSOR = '|'
