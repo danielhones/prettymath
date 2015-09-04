@@ -4,16 +4,26 @@
 MIT License
 """
 
+"""
+TODO: Think about doing it this new way (need to consider the latex commands though):
+
+Move all this shit into PrettyExpression (it will become simpler), and consider making
+every key bound to insert_char, except for a dictionary of the special characters such
+as backspace, delete, arrows, slash, and the like.  For Latex commands that need to be
+inserted, just take the number arguments needed, generate a '{' on left_buffer, and '}'
+on right_buffer, with another pair of them in the right_buffer if needed.  Then, make the
+arrow key functions navigate through them as needed.
+"""
+
+
 from latex_reference import LATEX_COMMANDS_WITH_ARGS, LATEX_COMMANDS_WITHOUT_ARGS
 import string
 import containers
 
 
 def insert_latex_command(expr, newkey):
-    print 'got to insert_latex_command'
     (num_args, special, arg_char) = LATEX_COMMANDS_WITH_ARGS[newkey.keysym]
     new_item = containers.LatexCommand(cmd=newkey.keysym, args=num_args, first_arg_char=arg_char)
-    print str(new_item)
     if special == 'active data':
         new_item.arguments[0] = expr.active_item.data
     return new_item
@@ -23,17 +33,17 @@ def erase_cursor(expr):
     return
 
 
+def backspace(expr, *args):
+    expr.backspace()
+
+
+def delete(expr, *args):
+    expr.delete_char()
+
+
 def insert_char(expr, newkey):
     # It seems like there should be a cleaner way to do this, but I can't think of one.
-    expr.active_item.insert_at_cursor(newkey.char)
-
-
-def insert_operator(expr, newkey):
-    operator = containers.Operator(newkey.char)
-    expr.active_item.insert_at_cursor(operator)
-    new_term = expr.active_item.new_term()
-    expr.append(new_term)
-    expr.active_item = new_term
+    expr.insert_at_cursor(newkey.char)
 
 
 def open_parens(expr, newkey):
@@ -49,11 +59,20 @@ def insert_subscript(expr, newkey):
 
 
 def backslash(expr, newkey):
-    return
+    pass
 
 
 def do_nothing(*args, **kwargs):
     pass
+
+
+def cursor_left(expr, *args):
+    expr.move_cursor_left()
+
+
+def cursor_right(expr, *args):
+    expr.move_cursor_right()
+
 
 # These next few things set up key bindings that map keypresses to the functions that need to be
 # called to handle them.
@@ -73,28 +92,42 @@ for i in OS_specific_modifier_keysym:
     BINDINGS[i] = do_nothing
 """
 BINDINGS = {
+    # Special Latex characters:
     ('/', NO_MOD_KEY): insert_latex_command,
     ('slash', NO_MOD_KEY): insert_latex_command,
+    ('^', SHIFT): insert_latex_command,
+    ('asciicircum', SHIFT): insert_latex_command,  # Arch again
+    ('_', SHIFT): insert_latex_command,
+    # Other special characters:
     ('(', SHIFT): open_parens,
     (')', SHIFT): close_parens,
     ('parenleft', SHIFT): open_parens,  # This is what Arch calls ( and )
     ('parenright', SHIFT): close_parens,
-    ('^', SHIFT): insert_latex_command,
-    ('asciicircum', SHIFT): insert_latex_command,  # Arch again
-    ('_', SHIFT): insert_latex_command,
+
     ('\\', NO_MOD_KEY): backslash,
-    ('plus', SHIFT): insert_operator,
-    ('minus', NO_MOD_KEY): insert_operator,
-    ('equal', NO_MOD_KEY): insert_operator,
-    ('plus', ON_NUMPAD): insert_operator,
-    ('minus', ON_NUMPAD): insert_operator,
-    ('equal', ON_NUMPAD): insert_operator,
+    # Operators:
+    ('plus', SHIFT): insert_char,
+    ('+', SHIFT): insert_char,
+    ('+', NO_MOD_KEY): insert_char,
+    ('minus', NO_MOD_KEY): insert_char,
+    ('=', NO_MOD_KEY): insert_char,
+    ('=', ON_NUMPAD): insert_char,
+    ('equal', NO_MOD_KEY): insert_char,
+    ('plus', ON_NUMPAD): insert_char,
+    ('minus', ON_NUMPAD): insert_char,
+    ('equal', ON_NUMPAD): insert_char,
+    # Modifier keys:
     ('Shift_L', NO_MOD_KEY): do_nothing,
     ('Shift_R', NO_MOD_KEY): do_nothing,
     ('Control_L', NO_MOD_KEY): do_nothing,
     ('Control_R', NO_MOD_KEY): do_nothing,
     ('Alt_L', NO_MOD_KEY): do_nothing,
     ('Alt_R', NO_MOD_KEY): do_nothing,
+    # Control keys:
+    ('BackSpace', NO_MOD_KEY): backspace,
+    ('Delete', NO_MOD_KEY): delete,
+    ('Left', NO_MOD_KEY): cursor_left,
+    ('Right', NO_MOD_KEY): cursor_right,
 }
 
 for keysym in string.ascii_lowercase:
@@ -113,6 +146,7 @@ def get_function_for(keysym, modifier):
         return BINDINGS[(keysym, modifier)]
     else:
         raise BindingsError('The key %s with state %s does not have an associated function' % (keysym, modifier))
+
 
 class BindingsError(Exception):
     pass
