@@ -9,9 +9,10 @@ TODO:
 
 Start cleaning up the awful bindings mess.  Probably easy enough to start it from scratch, since
 it's now simplified a bit, so take the hatchet to it.  Read up on "The Craft of Text Editing" to
-see if there are any ideas to help with the architecture.
-
-Get subscript and superscript working.
+see if there are any ideas to help with the architecture.  It might be simplest to first check to
+see if the keysym is in a dictionary of special keys (arrows, backspace, etc) and if not, just look
+up by key.character.  That would be best for crossplatform I think since there's no stupid "^" being
+"asciicircum" kind of stuff.
 
 Get frac working at least halfway, where you can type '/' as a new term and it creates a new fraction.
 Make up and down arrow keys work with it.
@@ -20,11 +21,13 @@ Once things are going in the right direction, get rid of bindings.py and contain
 
 Start implementing the latex_to_python translater (check to see if there's already something that exists
 for this)
+
+TODO: \frac{}{} with empty arguments makes the renderer complain.  Fix it.
 """
 
 
 from collections import deque
-from latex_reference import LATEX_COMMANDS_WITH_ARGS, LATEX_COMMANDS_WITHOUT_ARGS, CURSOR
+from latex_reference import CURSOR
 import bindings
 
 
@@ -54,9 +57,6 @@ class PrettyExpression(Observable):
         super(PrettyExpression, self).__init__()
         self.cursor = CURSOR
         self.reset()  # initialize left_buffer and right_buffer
-        # These lines can be erased soon:
-        # self.active_item = DataContainer(data=CURSOR)
-        # self._data_items = [self.active_item]
 
     @property
     def data(self):
@@ -102,6 +102,7 @@ class PrettyExpression(Observable):
         """Reset the object to an empty state, containing only the cursor"""
         self.left_buffer = deque()
         self.right_buffer = deque()
+        self.notify_observers()
 
     def add_keypress(self, newkey):
         try:
@@ -110,16 +111,27 @@ class PrettyExpression(Observable):
         except bindings.BindingsError as error:
             print error
 
-        # print 'PrettyExpression:', str(self.latex)
+        print 'PrettyExpression:', str(self)
         self.check_for_latex_command()
         self.notify_observers()
 
     def insert_at_cursor(self, char):
+        # TODO: Consider making this and the following function take a string also, and inserting each
+        #       character in it, rather than just a single character
         self.left_buffer.append(char)
 
+    def insert_after_cursor(self, char):
+        self.right_buffer.appendleft(char)
+
     def backspace(self):
-        # TODO: write a decorator for this pattern
+        # TODO: make this handle backspacing over curly braces.  Maybe make it move into the curly braces
+        #       and erase the next character?  Right now it throws an error.
         try:
+            if self.left_buffer[-1] == '}':
+                self.move_cursor_left()
+            if self.left_buffer[-1] == '{':
+                self.right_buffer.popleft()
+                self.left_buffer.pop()
             self.left_buffer.pop()
         except IndexError:
             pass

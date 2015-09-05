@@ -22,11 +22,20 @@ import containers
 
 
 def insert_latex_command(expr, newkey):
+    print "insert_latex_command called"
     (num_args, special, arg_char) = LATEX_COMMANDS_WITH_ARGS[newkey.keysym]
-    new_item = containers.LatexCommand(cmd=newkey.keysym, args=num_args, first_arg_char=arg_char)
-    if special == 'active data':
-        new_item.arguments[0] = expr.active_item.data
-    return new_item
+    if newkey.char is "/":
+        expr.insert_at_cursor(r'\frac{')
+    else:
+        expr.insert_at_cursor(newkey.char + '{')
+
+    expr.insert_after_cursor('}')
+    for i in range(num_args - 1):
+        if newkey.char is '/':
+            # Just a stupid little hack to keep the computer from complaining
+            expr.insert_after_cursor('.')
+        expr.insert_after_cursor('}{')
+    print str(expr)
 
 
 def erase_cursor(expr):
@@ -98,6 +107,7 @@ BINDINGS = {
     ('^', SHIFT): insert_latex_command,
     ('asciicircum', SHIFT): insert_latex_command,  # Arch again
     ('_', SHIFT): insert_latex_command,
+    ('underscore', SHIFT): insert_latex_command,
     # Other special characters:
     ('(', SHIFT): open_parens,
     (')', SHIFT): close_parens,
