@@ -52,6 +52,8 @@ def delete(expr, *args):
 
 def insert_char(expr, newkey):
     # It seems like there should be a cleaner way to do this, but I can't think of one.
+    if newkey.char is '*':
+        newkey.char = r'\cdot'
     expr.insert_at_cursor(newkey.char)
 
 
@@ -113,11 +115,17 @@ BINDINGS = {
     (')', SHIFT): close_parens,
     ('parenleft', SHIFT): open_parens,  # This is what Arch calls ( and )
     ('parenright', SHIFT): close_parens,
-
     ('\\', NO_MOD_KEY): backslash,
+
     # Operators:
     ('plus', SHIFT): insert_char,
     ('+', SHIFT): insert_char,
+    ('*', SHIFT): insert_char,
+    ('asterisk', SHIFT): insert_char,
+    ('*', NO_MOD_KEY): insert_char,
+    ('asterisk', NO_MOD_KEY): insert_char,
+    ('*', ON_NUMPAD): insert_char,
+    ('asterisk', ON_NUMPAD): insert_char,
     ('+', NO_MOD_KEY): insert_char,
     ('minus', NO_MOD_KEY): insert_char,
     ('=', NO_MOD_KEY): insert_char,

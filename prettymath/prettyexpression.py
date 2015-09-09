@@ -5,7 +5,7 @@ MIT License
 """
 
 """
-TODO:
+TODO: Fix architecture...
 
 Start cleaning up the awful bindings mess.  Probably easy enough to start it from scratch, since
 it's now simplified a bit, so take the hatchet to it.  Read up on "The Craft of Text Editing" to
@@ -14,15 +14,20 @@ see if the keysym is in a dictionary of special keys (arrows, backspace, etc) an
 up by key.character.  That would be best for crossplatform I think since there's no stupid "^" being
 "asciicircum" kind of stuff.
 
-Get frac working at least halfway, where you can type '/' as a new term and it creates a new fraction.
-Make up and down arrow keys work with it.
-
 Once things are going in the right direction, get rid of bindings.py and containers.py
 
-Start implementing the latex_to_python translater (check to see if there's already something that exists
-for this)
-
-TODO: \frac{}{} with empty arguments makes the renderer complain.  Fix it.
+TODO: Start implementing the latex_to_python translater (check to see if there's already something that exists
+      for this)
+TODO: See if it's possible to make subscripts a little smaller font and add a little extra space to the right of them
+TODO: Implement Latex command and greek letter substitution (like sin, cos, sigma, etc).  Think about making this
+      algorithm match as much as possible, rather than as soon as possible, that way you could type "epsilon" and
+      get "\epsilon" instead of "e\psi lon"
+TODO: Look into altering matplotlib.mathtext to custom render the cursor so it doesn't move characters out of the way
+      as you navigate through the text, and adjust certain things (like make "=" and "+" a little smaller, make
+      nested fracs, superscripts, and the like not diminish in size so quickly (or maybe it's just better to set a
+      larger font size on the renderer canvas).  Also see about making the cursor character shorter vertically, so
+      that it doesn't throw off vertical spacing of elements as it moves through the expression.
+TODO: \frac{}{} with empty arguments makes the renderer complain.  See if there's a way to fix it.
 """
 
 

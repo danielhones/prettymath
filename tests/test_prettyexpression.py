@@ -1,5 +1,5 @@
 """
-Unit tests for prettymath module
+Unit tests for PrettyExpression class
 """
 
 from prettymath.prettyexpression import PrettyExpression
@@ -28,7 +28,7 @@ UP_ARROW_KEY = Key(keysym="Up")
 DOWN_ARROW_KEY = Key(keysym="Down")
 
 
-class TestPrettyExpressionMethods(unittest.TestCase):
+class TestPrettyExpression(unittest.TestCase):
     def setUp(self):
         self.expression = PrettyExpression()
         new_keystream = make_keystream("y=x+2")

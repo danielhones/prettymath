@@ -6,11 +6,10 @@ add a second label to display raw_eq to insure it is equal to what latex_eq is d
 
 
 from Tkinter import *
-import ttk
 from prettymath.prettyexpression import PrettyExpression
 import matplotlib
 matplotlib.use('TkAgg')
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 
 
@@ -31,14 +30,11 @@ def add_key(event):
 
 def clear(*args):
     equation.reset()
-    entry_string.set('')
-    f.clear()
-    canvas.show()
+    update()
 
 
 f = Figure(figsize=(5, 3), dpi=100, facecolor='white')
 
-entry_string = StringVar()
 equation = PrettyExpression()
 equation.add_observer(update)
 
@@ -46,17 +42,14 @@ canvas = FigureCanvasTkAgg(f, master=root)
 canvas.show()
 
 canvas.get_tk_widget().pack(side=TOP, fill=BOTH, expand=1)
-entry = ttk.Entry(root, textvariable=entry_string)
 canvas._tkcanvas.pack(side=TOP, fill=BOTH, expand=1)
-entry.pack(side=TOP)
 
 button = Button(root, text='Clear', command=clear)
 button.pack(side=BOTTOM)
 
-entry.bind('<Return>', clear)
-entry.bind('<Key>', add_key)
-entry.focus()
-
+root.bind('<Return>', clear)
+root.bind('<Key>', add_key)
+root.focus()
 update()
 
 root.mainloop()
