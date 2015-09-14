@@ -26,12 +26,9 @@ def latex_to_python(latex):
 
 
 def parenthesize(x):
-    if type(x) is str:
-        return '(' + x + ')'
-    elif type(x) is tuple:
-        return ('(',) + x + (')',)
-    elif type(x) is list:
-        return ['('] + x + [')']
+    """Return x surrounded by open and close parentheses"""
+    cast = type(x)
+    return cast('(') + x + cast(')')
 
 
 def find_next_latex_arg(string):
@@ -40,19 +37,21 @@ def find_next_latex_arg(string):
 
 def find_next_matched_pair(chars, string):
     """
-    Given the outer characters to match in a string, returns the largest match, 
-    the outermost string if they're nested, with the characters stripped off.
-    
+    Given the outer characters to match in a string, returns the outermost of nested matches,
+    with the characters stripped off.
+
     For example:
     find_next_matched_pair('()', '(2*(3+z))') returns 2*(3+z)
     """
-    # TODO: should this also work on lists rather than just strings?
+    # TODO: Maybe this function needs to return both the matched part and the remainder of the string?
+    #       How else to continue with parsing after stripping off the argument?  Maybe this whole module
+    #       can work on a generator that returns the string character by character?
     left_char = chars[0]
     right_char = chars[1]
     try:
         initial_index = string.index(left_char)  # This should almost always be 0
         unmatched_chars = 1
-    except ValueError as e:
+    except ValueError:
         raise LatexTranslationError('Failed to find first occurence of', left_char, 'in', string)
 
     index = initial_index
@@ -63,14 +62,10 @@ def find_next_matched_pair(chars, string):
         elif string[index] == right_char:
             unmatched_chars -= 1
 
-    initial_index += 1  # So we don't include the first character in the return value
+    initial_index += 1  # So we don't include the first left_char in the return value
     final_index = index
     return string[initial_index:final_index]
-    
-    
+
 
 class LatexTranslationError(Exception):
     pass
-
-    
-    

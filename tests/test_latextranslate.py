@@ -16,7 +16,7 @@ class TestLatexTranslate(unittest.TestCase):
         self.assertNotEqual(l2p('65'), '6.05.0')
 
     def test_frac(self):
-        self.assertEqual(l2p('\frac{3/2}'), '(3.0/2.0)')
+        self.assertEqual(l2p('\frac{3/2}'), '((3.0)/(2.0))')
 
     def test_addition(self):
         self.assertEqual(l2p('4+x'), '4.0+x')
@@ -25,6 +25,13 @@ class TestLatexTranslate(unittest.TestCase):
 
     def test_implicit_multiplication(self):
         self.assertEqual(l2p('3xy'), '3*x*y')
+
+    def test_subscript(self):
+        self.assertEqual(l2p('x_{0}', 'x_0'))
+        self.assertNotEqual(l2p('x_{1}', 'x_1.0'))
+
+    def test_superscript(self):
+        self.assertEqual(lwp('x^{3}'), 'x**(3.0)')
     """
     pass
 
