@@ -3,7 +3,6 @@ Unit tests for PrettyExpression class
 """
 
 from prettymath.prettyexpression import PrettyExpression
-from prettymath.bindings import SHIFT, ON_NUMPAD
 import unittest
 
 
@@ -31,15 +30,15 @@ DOWN_ARROW_KEY = Key(keysym="Down")
 class TestPrettyExpression(unittest.TestCase):
     def setUp(self):
         self.expression = PrettyExpression()
-        new_keystream = make_keystream("y=x+2")
+        new_keystream = make_keystream("y=x+20")
         for i in new_keystream:
             self.expression.add_keypress(i)
 
     def test_cursorless_latex(self):
-        self.assertEqual(self.expression.cursorless_latex, "$y=x+2$")
+        self.assertEqual(self.expression.cursorless_latex, "$y=x+20$")
 
     def test_latex(self):
-        self.assertEqual(self.expression.latex, "$y=x+2|$")
+        self.assertEqual(self.expression.latex, "$y=x+20|$")
 
     def test_reset(self):
         self.expression.reset()
@@ -49,22 +48,39 @@ class TestPrettyExpression(unittest.TestCase):
 
     def test_backspace(self):
         self.expression.add_keypress(BACKSPACE_KEY)
-        self.assertEqual(self.expression.latex, "$y=x+|$")
+        self.assertEqual(self.expression.latex, "$y=x+2|$")
 
     def test_delete_char(self):
         pass
 
     def test_left_arrow_key(self):
         self.expression.add_keypress(LEFT_ARROW_KEY)
-        self.assertEqual(self.expression.latex, "$y=x+|2$")
+        self.assertEqual(self.expression.latex, "$y=x+2|0$")
 
     def test_right_arrow_key(self):
         self.expression.add_keypress(RIGHT_ARROW_KEY)
-        self.assertEqual(self.expression.latex, "$y=x+2|$")
+        self.assertEqual(self.expression.latex, "$y=x+20|$")
         self.expression.add_keypress(LEFT_ARROW_KEY)
         self.expression.add_keypress(LEFT_ARROW_KEY)
         self.expression.add_keypress(RIGHT_ARROW_KEY)
-        self.assertEqual(self.expression.latex, "$y=x+|2$")
+        self.assertEqual(self.expression.latex, "$y=x+2|0$")
+
+    def test_check_for_latex_command(self):
+        expr = PrettyExpression()
+        for i in make_keystream("sinx"):
+            expr.add_keypress(i)
+        self.assertEqual(expr.latex, r"$\sin x|$")
+        """
+        expr.reset()
+        for i in make_keystream("sinhx"):
+            expr.add_keypress(i)
+        self.assertEqual(expr.latex, r"$\sinh x|$")
+
+        expr.reset()
+        for i in make_keystream("epsilon"):
+            expr.add_keypress(i)
+        self.assertEqual(expr.latex, r"$\epsilon |$")
+        """
 
     def test_up_arrow_key(self):
         pass

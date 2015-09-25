@@ -5,19 +5,18 @@ MIT License
 """
 
 """
-TODO: Fix architecture...
+TODO: Clean up the awful bindings mess.
 
-Start cleaning up the awful bindings mess.  Probably easy enough to start it from scratch, since
-it's now simplified a bit, so take the hatchet to it.  Read up on "The Craft of Text Editing" to
-see if there are any ideas to help with the architecture.  It might be simplest to first check to
-see if the keysym is in a dictionary of special keys (arrows, backspace, etc) and if not, just look
-up by key.character.  That would be best for crossplatform I think since there's no stupid "^" being
-"asciicircum" kind of stuff.
+Probably easy enough to start it from scratch, since it's now simplified a bit, so take the hatchet to it.
+Read up on "The Craft of Text Editing" to see if there are any ideas to help with the architecture.  It might
+be simplest to first check to see if the keysym is in a dictionary of special keys (arrows, backspace, etc)
+and if not, just look up by key.character.  That would be best for crossplatform I think since there's no
+stupid "^" being "asciicircum" kind of stuff.  Once things are going in the right direction, get rid of bindings.py
+and containers.py
 
-Once things are going in the right direction, get rid of bindings.py and containers.py
 
-TODO: Start implementing the latex_to_python translater (check to see if there's already something that exists
-      for this)
+TODO: Implement the latex_to_python translater
+TODO: Implement left and right parentheses
 TODO: See if it's possible to make subscripts a little smaller font and add a little extra space to the right of them
 TODO: Implement Latex command and greek letter substitution (like sin, cos, sigma, etc).  Think about making this
       algorithm match as much as possible, rather than as soon as possible, that way you could type "epsilon" and
@@ -32,7 +31,7 @@ TODO: \frac{}{} with empty arguments makes the renderer complain.  See if there'
 
 
 from collections import deque
-from latex_reference import CURSOR
+from latex_reference import CURSOR, LATEX_COMMANDS_WITHOUT_ARGS
 import bindings
 
 
@@ -63,22 +62,14 @@ class PrettyExpression(Observable):
         self.cursor = CURSOR
         self.reset()  # initialize left_buffer and right_buffer
 
-    @property
-    def data(self):
-        accumulated_data = []
-        for i in self._data_items:
-            accumulated_data.extend(i.data)
-        return accumulated_data
-
-    @data.setter
-    def data(self, items):
-        if type(items) is not list:
-            self._data_items = [items]
-        else:
-            self._data_items = items
-
-    def append(self, item):
-        self._data_items.append(item)
+    def reset(self):
+        """Reset the object to an empty state, containing only the cursor"""
+        # Strictly speaking, only the right buffer needs to be a deque since it is the only one
+        # that will need to push and pop its 0 index.
+        self.left_buffer = deque()
+        self.right_buffer = deque()
+        self.running_string = []
+        self.notify_observers()
 
     @property
     def latex(self):
@@ -103,12 +94,6 @@ class PrettyExpression(Observable):
     def _after_cursor(self):
         return ''.join(self.right_buffer)
 
-    def reset(self):
-        """Reset the object to an empty state, containing only the cursor"""
-        self.left_buffer = deque()
-        self.right_buffer = deque()
-        self.notify_observers()
-
     def add_keypress(self, newkey):
         try:
             func = bindings.get_function_for(newkey.keysym, newkey.state)
@@ -117,13 +102,11 @@ class PrettyExpression(Observable):
             print error
 
         print 'PrettyExpression:', str(self)
-        self.check_for_latex_command()
         self.notify_observers()
 
     def insert_at_cursor(self, char):
-        # TODO: Consider making this and the following function take a string also, and inserting each
-        #       character in it, rather than just a single character
         self.left_buffer.append(char)
+        self._check_for_latex_command()
 
     def insert_after_cursor(self, char):
         self.right_buffer.appendleft(char)
@@ -159,9 +142,29 @@ class PrettyExpression(Observable):
         except IndexError:
             pass
 
-    def check_for_latex_command(self):
+    def _check_for_latex_command(self):
         """
         Check this object for a recently-typed LaTeX command and if there is one, parse it and
         add it to the data structure
         """
-        pass
+        # This still has the problem that it terminates as soon as possible, for example it will
+        # match the 'sin' part of 'sinh' first, making it impossible to get 'sinh'
+        # TODO: Change this so it deals with the problem of prematurely writing Latex commands
+        TERMINATING_CHARS = r'\*+-=^_{}()'
+        index = len(self.left_buffer) - 1
+        next_char = self.left_buffer[index][0]
+        check_pieces = deque(next_char)
+
+        while (index >= 0) and (next_char not in TERMINATING_CHARS):
+            check_string = ''.join(check_pieces)
+            if check_string in LATEX_COMMANDS_WITHOUT_ARGS:
+                command = '\\' + check_string + ' '
+                self._replace_in_left_buffer(command, len(check_pieces))
+            index -= 1
+            next_char = self.left_buffer[index][0]
+            check_pieces.appendleft(next_char)
+
+    def _replace_in_left_buffer(self, string, num_pieces):
+        for i in range(num_pieces):
+            self.left_buffer.pop()
+        self.insert_at_cursor(string)

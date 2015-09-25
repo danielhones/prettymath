@@ -33,6 +33,9 @@ LATEX_COMMANDS_WITHOUT_ARGS = [
     'arcsin',
     'arccos',
     'arctan',
+    'sinh',
+    'cosh',
+    'tanh',
 ]
 
 greek_letters = [
