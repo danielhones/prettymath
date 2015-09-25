@@ -18,7 +18,6 @@ arrow key functions navigate through them as needed.
 
 from latex_reference import LATEX_COMMANDS_WITH_ARGS, LATEX_COMMANDS_WITHOUT_ARGS
 import string
-import containers
 
 
 def insert_latex_command(expr, newkey):
