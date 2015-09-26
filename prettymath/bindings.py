@@ -52,7 +52,7 @@ def delete(expr, *args):
 def insert_char(expr, newkey):
     # It seems like there should be a cleaner way to do this, but I can't think of one.
     if newkey.char is '*':
-        newkey.char = r'\cdot'
+        newkey.char = r'\cdot '
     expr.insert_at_cursor(newkey.char)
 
 

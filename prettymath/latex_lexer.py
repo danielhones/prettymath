@@ -12,6 +12,8 @@ tokens = (
     'TIMES',
     'PLUS',
     'MINUS',
+    'ASSIGN',  # This is the equal sign
+    'EQUALS',  # This is equivalence in Python.  Not sure if we need this.
 )
 t_VARIABLE = r'[a-zA-Z]{1}'
 t_FLOAT = r'\d+\.\d+|\.\d+'
@@ -20,8 +22,9 @@ t_EXPONENT = r'\^'
 t_PLUS = r'\+'
 t_MINUS = r'\-'
 t_SUBSCRIPT = r'\_'
+t_ASSIGN = '='
+t_EQUALS = '=='
 t_ignore = ' \t\n'
-# TODO: Add a subscript state here too, also exclusive since numbers, etc don't need to be translated
 states = (
     ('inarg', 'exclusive'),  # Not sure if exclusive is right here
 )

@@ -1,7 +1,7 @@
 """
-GUI to test the realtime update and rendering of PrettyEquation instance
+GUI to test the realtime update and rendering of PrettyEquation instance.
 
-add a second label to display raw_eq to insure it is equal to what latex_eq is displaying
+This is very sloppy
 """
 
 
@@ -11,6 +11,7 @@ import matplotlib
 matplotlib.use('TkAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
+import math
 
 
 root = Tk()
@@ -24,30 +25,47 @@ def update(*args):
     canvas.show()
 
 
+def evaluate(*args):
+    f2.clear()
+    raw = equation.expression
+    answer = eval(raw)
+    if int(answer) == answer:
+        answer = int(answer)
+    answer = '$' + str(answer) + '$'
+    f2.text(.5, .5, answer, size='x-large', ha='center', va='center')
+    answer_canvas.show()
+
+
 def add_key(event):
     equation.add_keypress(event)
 
 
 def clear(*args):
     equation.reset()
+    f2.clear()
+    answer_canvas.show()
     update()
 
 
-f = Figure(figsize=(5, 3), dpi=100, facecolor='white')
+f = Figure(figsize=(4, 2), dpi=100, facecolor='white')
 
 equation = PrettyExpression()
 equation.add_observer(update)
 
 canvas = FigureCanvasTkAgg(f, master=root)
 canvas.show()
-
 canvas.get_tk_widget().pack(side=TOP, fill=BOTH, expand=1)
 canvas._tkcanvas.pack(side=TOP, fill=BOTH, expand=1)
 
-button = Button(root, text='Clear', command=clear)
-button.pack(side=BOTTOM)
+f2 = Figure(figsize=(4, 2), dpi=100, facecolor='white')
+answer_canvas = FigureCanvasTkAgg(f2, master=root)
+answer_canvas.show()
+answer_canvas.get_tk_widget().pack(side=BOTTOM, fill=BOTH, expand=1)
+answer_canvas._tkcanvas.pack(side=BOTTOM, fill=BOTH, expand=1)
 
-root.bind('<Return>', clear)
+
+root.bind('<Escape>', clear)
+root.bind('<Return>', evaluate)
 root.bind('<Key>', add_key)
 root.focus()
 update()

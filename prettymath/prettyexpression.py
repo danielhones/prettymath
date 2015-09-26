@@ -31,6 +31,7 @@ TODO: \frac{}{} with empty arguments makes the renderer complain.  See if there'
 
 
 from collections import deque
+from latex_translate import latex_to_python
 from latex_reference import CURSOR, LATEX_COMMANDS_WITHOUT_ARGS
 import bindings
 
@@ -93,6 +94,10 @@ class PrettyExpression(Observable):
     @property
     def _after_cursor(self):
         return ''.join(self.right_buffer)
+
+    @property
+    def expression(self):
+        return latex_to_python(self.cursorless_str)
 
     def add_keypress(self, newkey):
         try:

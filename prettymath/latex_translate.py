@@ -1,31 +1,12 @@
 """
-Maybe a rule-based approach is good here?
-For example:
-
-\frac{num}{denom} -> ((num)/(denom))
-x_{string}        -> x_string
-3abc              -> 3*a*b*c
-x^{expr}          -> x**(expr)
-
-I wonder if this is feasible to implement this way.
+TODO: consider making a LatexTranslater class, since all the functions and nested functions
+perform operations on the same object (lexer).  lexer could be an attribute of the class,
+rather than passing it through the function calls.  Works either way, which is cleaner?
 """
 
 from collections import deque
 import latex_lexer
 from ply import lex
-
-
-def pass_through(x):
-    return x
-
-
-# Maybe make this a class called TokenTranslator or something, where the actions to take are defined
-# as methods, with an additional method that looks up the appropriate action in a table and applies it.
-TRANSLATE_TABLE = {
-    'VARIABLE': pass_through,
-    'FLOAT': pass_through,
-    'INTEGER': lambda x: x + '.0',
-}
 
 
 def latex_to_python(latex):
@@ -40,37 +21,81 @@ def latex_to_python(latex):
         token = lexer.token()
         if not token:
             break
-
-        if token.type == 'VARIABLE':
-            result.append(token.value)
-        elif token.type == 'INTEGER':
-            result.append(token.value + '.0')
-        elif token.type == 'FLOAT':
-            result.append(token.value)
-        elif token.type == 'PLUS':
-            result.append(token.value)
-        elif token.type == 'MINUS':
-            result.append(token.value)
-        elif token.type == 'TIMES':
-            result.append('*')
-        elif token.type == 'COMMAND':
-            if token.value == '\\frac':
-                arg1 = lexer.token()
-                arg2 = lexer.token()
-                result.append('(')
-                result.append(parenthesize(latex_to_python(arg1.value)))
-                result.append('/')
-                result.append(parenthesize(latex_to_python(arg2.value)))
-                result.append(')')
-        elif token.type == 'EXPONENT':
-            result.append('**')
-            arg = lexer.token()  # break this into function get_next_arg
-            result.append(parenthesize(latex_to_python(arg.value)))
-        elif token.type == 'ARGUMENT':
-            arg = latex_to_python(token.value)
-            result.append(arg)  # This might be right, I dunno
-
+        result.append(translate_token(token, lexer))
     return ''.join(result)
+
+
+def translate_token(token, lexer):
+    def get_next_arg():
+        return lexer.token()
+
+    def pass_through():
+        return token.value
+
+    def VARIABLE():
+        if token.value == 'e':
+            return 'math.e'
+        else:
+            return pass_through()
+
+    def INTEGER():
+        return token.value + '.0'
+
+    def COMMAND():
+        return translate_command(token, lexer)
+
+    def TIMES():
+        return '*'
+
+    def EXPONENT():
+        result = ['**']
+        arg = get_next_arg()
+        # I think this works here:
+        result.append(parenthesize(latex_to_python(arg.value)))
+        return ''.join(result)
+
+    def ARGUMENT():
+        translated_arg = latex_to_python(token.value)
+        return translated_arg
+
+    try:
+        return eval(token.type)()
+    except NameError:
+        # Default behavior is pass_through():
+        return pass_through()
+
+
+def translate_command(token, lexer):
+    def get_next_arg():
+        return lexer.token()
+
+    def frac():
+        arg1 = get_next_arg()
+        arg2 = get_next_arg()
+        result = ['(']
+        result.append(parenthesize(latex_to_python(arg1.value)))
+        result.append('/')
+        result.append(parenthesize(latex_to_python(arg2.value)))
+        result.append(')')
+        return ''.join(result)
+
+    def pi():
+        return 'math.pi'
+
+    def sin():
+        # TODO: write a function get_next_term() or something that returns the part that should
+        # go inside the parens for math.sin, if there are not existing parens.  **Or always include
+        # explicit parens from the PrettyExpression class.
+        return 'math.sin'
+
+    def cos():
+        return 'math.cos'
+
+    command_name = token.value[1:].strip()
+    try:
+        return eval(command_name)()
+    except NameError:
+        raise LatexTranslationError("Couldn't translate token " + token.type + ' with value ' + token.value)
 
 
 def parenthesize(x):
