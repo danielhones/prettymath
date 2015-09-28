@@ -14,6 +14,9 @@ tokens = (
     'MINUS',
     'ASSIGN',  # This is the equal sign
     'EQUALS',  # This is equivalence in Python.  Not sure if we need this.
+    # 'IMPLICIT_MULT',
+    'LPAREN',
+    'RPAREN',
 )
 t_VARIABLE = r'[a-zA-Z]{1}'
 t_FLOAT = r'\d+\.\d+|\.\d+'
@@ -24,6 +27,10 @@ t_MINUS = r'\-'
 t_SUBSCRIPT = r'\_'
 t_ASSIGN = '='
 t_EQUALS = '=='
+t_LPAREN = r'\('
+t_RPAREN = r'\)'
+
+
 t_ignore = ' \t\n'
 states = (
     ('inarg', 'exclusive'),  # Not sure if exclusive is right here

@@ -32,7 +32,7 @@ TODO: \frac{}{} with empty arguments makes the renderer complain.  See if there'
 
 from collections import deque
 from latex_translate import latex_to_python
-from latex_reference import CURSOR, LATEX_COMMANDS_WITHOUT_ARGS
+from latex_reference import CURSOR, LATEX_COMMAND_FUNCTIONS, LATEX_COMMANDS_WITHOUT_ARGS
 import bindings
 
 
@@ -162,7 +162,12 @@ class PrettyExpression(Observable):
 
         while (index >= 0) and (next_char not in TERMINATING_CHARS):
             check_string = ''.join(check_pieces)
-            if check_string in LATEX_COMMANDS_WITHOUT_ARGS:
+            if check_string in LATEX_COMMAND_FUNCTIONS:
+                command = '\\' + check_string + ' '
+                self._replace_in_left_buffer(command, len(check_pieces))
+                self.insert_at_cursor('(')
+                self.insert_after_cursor(')')
+            elif check_string in LATEX_COMMANDS_WITHOUT_ARGS:
                 command = '\\' + check_string + ' '
                 self._replace_in_left_buffer(command, len(check_pieces))
             index -= 1

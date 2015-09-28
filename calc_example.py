@@ -47,7 +47,7 @@ def clear(*args):
     update()
 
 
-f = Figure(figsize=(4, 2), dpi=100, facecolor='white')
+f = Figure(figsize=(4, 1), dpi=100, facecolor='white')
 
 equation = PrettyExpression()
 equation.add_observer(update)
@@ -57,7 +57,7 @@ canvas.show()
 canvas.get_tk_widget().pack(side=TOP, fill=BOTH, expand=1)
 canvas._tkcanvas.pack(side=TOP, fill=BOTH, expand=1)
 
-f2 = Figure(figsize=(4, 2), dpi=100, facecolor='white')
+f2 = Figure(figsize=(4, 1), dpi=100, facecolor='white')
 answer_canvas = FigureCanvasTkAgg(f2, master=root)
 answer_canvas.show()
 answer_canvas.get_tk_widget().pack(side=BOTTOM, fill=BOTH, expand=1)

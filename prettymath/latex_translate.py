@@ -54,6 +54,24 @@ def translate_token(token, lexer):
         result.append(parenthesize(latex_to_python(arg.value)))
         return ''.join(result)
 
+    def IMPLICIT_MULT():
+        result = []
+        if token.digits:
+            if '.' not in token.digits:
+                result.append(token.digits + '.0')
+            else:
+                result.append(token.digits)
+        if token.pi:
+            result.append('math.pi')
+        if token.variables:
+            variables = [i for i in token.variables]
+            result.extend(variables)
+        return '*'.join(result)
+
+    def SUBSCRIPT():
+        arg = get_next_arg()
+        return '_' + arg.value
+
     def ARGUMENT():
         translated_arg = latex_to_python(token.value)
         return translated_arg
