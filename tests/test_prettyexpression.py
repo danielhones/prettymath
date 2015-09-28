@@ -34,16 +34,12 @@ class TestPrettyExpression(unittest.TestCase):
         for i in new_keystream:
             self.expression.add_keypress(i)
 
-    def test_cursorless_latex(self):
-        self.assertEqual(self.expression.cursorless_latex, "$y=x+20$")
-
     def test_latex(self):
         self.assertEqual(self.expression.latex, "$y=x+20|$")
 
     def test_reset(self):
         self.expression.reset()
         self.assertEqual(self.expression.latex, "$|$")
-        self.assertEqual(self.expression.cursorless_latex, "$$")
         self.assertEqual(str(self.expression), "|")
 
     def test_backspace(self):
@@ -69,7 +65,7 @@ class TestPrettyExpression(unittest.TestCase):
         expr = PrettyExpression()
         for i in make_keystream("sinx"):
             expr.add_keypress(i)
-        self.assertEqual(expr.latex, r"$\sin x|$")
+        self.assertEqual(expr.latex, r"$\sin (x|)$")
         """
         expr.reset()
         for i in make_keystream("sinhx"):

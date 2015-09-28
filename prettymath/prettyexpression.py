@@ -6,27 +6,11 @@ MIT License
 
 """
 TODO: Clean up the awful bindings mess.
-
-Probably easy enough to start it from scratch, since it's now simplified a bit, so take the hatchet to it.
-Read up on "The Craft of Text Editing" to see if there are any ideas to help with the architecture.  It might
-be simplest to first check to see if the keysym is in a dictionary of special keys (arrows, backspace, etc)
-and if not, just look up by key.character.  That would be best for crossplatform I think since there's no
-stupid "^" being "asciicircum" kind of stuff.  Once things are going in the right direction, get rid of bindings.py
-and containers.py
-
-
-TODO: Implement the latex_to_python translater
-TODO: Implement left and right parentheses
-TODO: See if it's possible to make subscripts a little smaller font and add a little extra space to the right of them
-TODO: Implement Latex command and greek letter substitution (like sin, cos, sigma, etc).  Think about making this
-      algorithm match as much as possible, rather than as soon as possible, that way you could type "epsilon" and
-      get "\epsilon" instead of "e\psi lon"
-TODO: Look into altering matplotlib.mathtext to custom render the cursor so it doesn't move characters out of the way
-      as you navigate through the text, and adjust certain things (like make "=" and "+" a little smaller, make
-      nested fracs, superscripts, and the like not diminish in size so quickly (or maybe it's just better to set a
-      larger font size on the renderer canvas).  Also see about making the cursor character shorter vertically, so
-      that it doesn't throw off vertical spacing of elements as it moves through the expression.
-TODO: \frac{}{} with empty arguments makes the renderer complain.  See if there's a way to fix it.
+TODO: Look into defining and using custom font to custom render the cursor so it doesn't move characters out of the way
+      as you navigate through the text, and adjust certain things (like make "=" and "+" a little smaller, make nested
+      fracs, superscripts, and the like not diminish in size so quickly (or maybe it's just better to set a larger font
+      size on the renderer canvas).  Also see about making the cursor character shorter vertically, so that it doesn't
+      throw off vertical spacing of elements as it moves through the expression.
 """
 
 
@@ -50,9 +34,7 @@ class Observable(object):
 
 class PrettyExpression(Observable):
     """
-    This class has two main attributes: raw, which is a valid Python math expression, and latex
-    which is that expression formatted to look nice in Latex.  It's sort of the container or root
-    class for the operators and operands.
+    TODO: make this docstring actually useful.
 
     This class uses a split buffer (consisting of self.left_buffer and self.right_buffer) data structure
     to contain the LaTeX math expression.  The split is at the cursor.
@@ -74,11 +56,11 @@ class PrettyExpression(Observable):
 
     @property
     def latex(self):
+        # TODO: Think about this, maybe it's necessary to do this only for parentheses that are matched
+        # This makes parentheses grow in height to match the expression they contain:
+        # raw = str(self)
+        # parenthesized = raw.replace('(', r'\left(').replace(')', r'\right)')
         return '$' + str(self) + '$'
-
-    @property
-    def cursorless_latex(self):
-        return '$' + self.cursorless_str + '$'
 
     def __str__(self):
         return self._before_cursor + self.cursor + self._after_cursor
@@ -101,7 +83,7 @@ class PrettyExpression(Observable):
 
     def add_keypress(self, newkey):
         try:
-            func = bindings.get_function_for(newkey.keysym, newkey.state)
+            func = bindings.get_function_for(newkey)
             func(self, newkey)
         except bindings.BindingsError as error:
             print error
@@ -111,6 +93,8 @@ class PrettyExpression(Observable):
 
     def insert_at_cursor(self, char):
         self.left_buffer.append(char)
+        if len(self.right_buffer) > 0 and self.right_buffer[0] == r'\ ':
+            self.right_buffer.popleft()  # Clean up blank placeholder
         self._check_for_latex_command()
 
     def insert_after_cursor(self, char):
@@ -118,7 +102,8 @@ class PrettyExpression(Observable):
 
     def backspace(self):
         # TODO: make this handle backspacing over curly braces.  Maybe make it move into the curly braces
-        #       and erase the next character?  Right now it throws an error.
+        #       and erase the next character?  Right now it throws an error.  Maybe write a method that cleans
+        #       unmatched curly braces and call it whenever delete or backspace are called
         try:
             if self.left_buffer[-1] == '}':
                 self.move_cursor_left()

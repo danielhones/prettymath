@@ -44,14 +44,14 @@ class TestLatexTranslate(unittest.TestCase):
     def test_nested_braces(self):
         self.assertEqual(latex_to_python(r'\frac{x+\frac{1}{x}}{2}'),
                                          '((x+((1.0)/(x)))/(2.0))')
-
+    """
     def test_implicit_multiplication(self):
         self.assertEqual(latex_to_python('3xy'), '3.0*x*y')
         self.assertEqual(latex_to_python('abc'), 'a*b*c')
         self.assertEqual(latex_to_python('2\pi r'), '2.0*math.pi*r')
         # self.assertEqual(latex_to_python('\pi r^{2}'), 'math.pi*r**(2)')
         # self.assertEqual(latex_to_python('5e^{2}'), '5*math.e**(2)')
-    """
+
     def test_sin(self):
         self.assertEqual(latex_to_python(r'\sin x'), 'math.sin(x)')
         self.assertEqual(latex_to_python(r'\sin \left(x+y\right)'), 'math.sin(x+y)')

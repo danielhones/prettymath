@@ -32,13 +32,9 @@ def insert_latex_command(expr, newkey):
     for i in range(num_args - 1):
         if newkey.char is '/':
             # Just a stupid little hack to keep the computer from complaining
-            expr.insert_after_cursor('.')
+            expr.insert_after_cursor('\ ')
         expr.insert_after_cursor('}{')
     print str(expr)
-
-
-def erase_cursor(expr):
-    return
 
 
 def backspace(expr, *args):
@@ -55,21 +51,6 @@ def insert_char(expr, newkey):
         newkey.char = r'\cdot '
     expr.insert_at_cursor(newkey.char)
 
-
-def open_parens(expr, newkey):
-    return
-
-
-def close_parens(expr, newkey):
-    return
-
-
-def insert_subscript(expr, newkey):
-    return
-
-
-def backslash(expr, newkey):
-    pass
 
 
 def do_nothing(*args, **kwargs):
@@ -90,32 +71,33 @@ NO_MOD_KEY = 0
 SHIFT = 1
 ON_NUMPAD = 32
 
-"""
-TODO:
-There's a cleaner way to do this, especially since it will get cluttered when adding all
-the different modifier key names for cross platform support.  Consider changing it to something like,
-'/' through 'equal' is the same below, then add the do_nothing's by checking the OS, and having a list
-of modifier keysym names for each OS.  Then use something like:
 
-get(OS_specific_modifier_keysym)
-for i in OS_specific_modifier_keysym:
-    BINDINGS[i] = do_nothing
-"""
 BINDINGS = {
-    # Special Latex characters:
+    # Special characters:
     ('/', NO_MOD_KEY): insert_latex_command,
     ('slash', NO_MOD_KEY): insert_latex_command,
     ('^', SHIFT): insert_latex_command,
     ('asciicircum', SHIFT): insert_latex_command,  # Arch again
     ('_', SHIFT): insert_latex_command,
     ('underscore', SHIFT): insert_latex_command,
-    # Other special characters:
-    ('(', SHIFT): open_parens,
-    (')', SHIFT): close_parens,
-    ('parenleft', SHIFT): open_parens,  # This is what Arch calls ( and )
-    ('parenright', SHIFT): close_parens,
-    ('\\', NO_MOD_KEY): backslash,
+    ('\\', NO_MOD_KEY): do_nothing,
+    ('backslash', NO_MOD_KEY): do_nothing,
 
+    # Modifier keys:
+    ('Shift_L', NO_MOD_KEY): do_nothing,
+    ('Shift_R', NO_MOD_KEY): do_nothing,
+    ('Control_L', NO_MOD_KEY): do_nothing,
+    ('Control_R', NO_MOD_KEY): do_nothing,
+    ('Alt_L', NO_MOD_KEY): do_nothing,
+    ('Alt_R', NO_MOD_KEY): do_nothing,
+
+    # Control keys:
+    ('BackSpace', NO_MOD_KEY): backspace,
+    ('Delete', NO_MOD_KEY): delete,
+    ('Left', NO_MOD_KEY): cursor_left,
+    ('Right', NO_MOD_KEY): cursor_right,
+}
+"""
     # Operators:
     ('plus', SHIFT): insert_char,
     ('+', SHIFT): insert_char,
@@ -133,36 +115,18 @@ BINDINGS = {
     ('plus', ON_NUMPAD): insert_char,
     ('minus', ON_NUMPAD): insert_char,
     ('equal', ON_NUMPAD): insert_char,
-    # Modifier keys:
-    ('Shift_L', NO_MOD_KEY): do_nothing,
-    ('Shift_R', NO_MOD_KEY): do_nothing,
-    ('Control_L', NO_MOD_KEY): do_nothing,
-    ('Control_R', NO_MOD_KEY): do_nothing,
-    ('Alt_L', NO_MOD_KEY): do_nothing,
-    ('Alt_R', NO_MOD_KEY): do_nothing,
-    # Control keys:
-    ('BackSpace', NO_MOD_KEY): backspace,
-    ('Delete', NO_MOD_KEY): delete,
-    ('Left', NO_MOD_KEY): cursor_left,
-    ('Right', NO_MOD_KEY): cursor_right,
-}
 
-for keysym in string.ascii_lowercase:
-    BINDINGS[(keysym, NO_MOD_KEY)] = insert_char
-
-for keysym in string.ascii_uppercase:
-    BINDINGS[(keysym, SHIFT)] = insert_char
-
-for keysym in string.digits:
-    BINDINGS[(keysym, NO_MOD_KEY)] = insert_char
-    BINDINGS[(keysym, ON_NUMPAD)] = insert_char
+"""
 
 
-def get_function_for(keysym, modifier):
-    if (keysym, modifier) in BINDINGS:
-        return BINDINGS[(keysym, modifier)]
+def get_function_for(key):
+    if (key.keysym, key.state) in BINDINGS:
+        return BINDINGS[(key.keysym, key.state)]
+    elif key.char is not None:
+        return insert_char
     else:
-        raise BindingsError('The key %s with state %s does not have an associated function' % (keysym, modifier))
+        raise BindingsError('There is not an associated function for key ' + key.keysym + ' with state ' +
+                            key.state)
 
 
 class BindingsError(Exception):
