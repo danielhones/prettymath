@@ -5,6 +5,7 @@ MIT License
 """
 
 
+CURSOR = r'|'
 DEFAULT_DELIMITERS = ('{', '}')
 PAREN_DELIMITERS = ('(', ')')
 NO_DELIMITERS = ()
@@ -85,4 +86,3 @@ greek_letters = [
 
 LATEX_COMMANDS_WITHOUT_ARGS.extend(greek_letters)
 
-CURSOR = '|'

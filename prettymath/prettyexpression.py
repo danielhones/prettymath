@@ -5,7 +5,7 @@ MIT License
 """
 
 """
-TODO: Clean up the awful bindings mess.
+TODO: (PRIORITY) Implement _check_for_latex_command()
 TODO: Look into defining and using custom font to custom render the cursor so it doesn't move characters out of the way
       as you navigate through the text, and adjust certain things (like make "=" and "+" a little smaller, make nested
       fracs, superscripts, and the like not diminish in size so quickly (or maybe it's just better to set a larger font
@@ -99,29 +99,6 @@ class PrettyExpression(Observable):
         self.command_buffer = []
         self.notify_observers()
 
-    @property
-    def latex(self):
-        return '$' + str(self) + '$'
-
-    def __str__(self):
-        return self._before_cursor + self.cursor + self._after_cursor
-
-    @property
-    def cursorless_str(self):
-        return self._before_cursor + self._after_cursor
-
-    @property
-    def _before_cursor(self):
-        return ''.join(self.left_buffer)
-
-    @property
-    def _after_cursor(self):
-        return ''.join(self.right_buffer)
-
-    @property
-    def expression(self):
-        return latex_to_python(self.cursorless_str)
-
     def add_keypress(self, newkey):
         self.newkey = newkey
         try:
@@ -214,7 +191,7 @@ class PrettyExpression(Observable):
             # This means '/' was pressed after a numerator was entered, we need to find the numerator,
             # put '\frac{' before it, '}{' after it but before the cursor, and '}' after the cursor
             temp_buffer = [self.left_buffer.pop()]
-            while len(self.left_buffer) > 0 and temp_buffer[-1] not in NEW_TERM_CHARS:
+            while len(self.left_buffer) > 0 and self.left_buffer[-1] not in NEW_TERM_CHARS:
                 temp_buffer.append(self.left_buffer.pop())
             self.left_buffer.extend([BEGIN_FRAC] + temp_buffer[::-1] + [SEPARATOR])
             self._insert_after_cursor(END_FRAC)
@@ -243,6 +220,29 @@ class PrettyExpression(Observable):
         for i in range(num_pieces):
             self.left_buffer.pop()
         self._insert_at_cursor(string)
+
+    @property
+    def latex(self):
+        return '$' + str(self) + '$'
+
+    def __str__(self):
+        return self._before_cursor + self.cursor + self._after_cursor
+
+    @property
+    def cursorless_str(self):
+        return self._before_cursor + self._after_cursor
+
+    @property
+    def _before_cursor(self):
+        return ''.join(self.left_buffer)
+
+    @property
+    def _after_cursor(self):
+        return ''.join(self.right_buffer)
+
+    @property
+    def expression(self):
+        return latex_to_python(self.cursorless_str)
 
 
 class PrettyExpressionError(Exception):

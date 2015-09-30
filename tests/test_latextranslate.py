@@ -112,3 +112,7 @@ class TestUtilityFunctions(unittest.TestCase):
         self.assertEqual(parenthesize(['2', '+', 'x']), result)
         self.assertEqual(parenthesize(('2', '+', 'x')), tuple(result))
         self.assertEqual(parenthesize(deque(['2', '+', 'x'])), deque(result))
+
+
+if __name__ == '__main__':
+    unittest.main()
