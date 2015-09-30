@@ -16,8 +16,38 @@ TODO: Look into defining and using custom font to custom render the cursor so it
 
 from collections import deque
 from latex_translate import latex_to_python
-from latex_reference import CURSOR, LATEX_COMMAND_FUNCTIONS, LATEX_COMMANDS_WITHOUT_ARGS
-import bindings
+from latex_reference import CURSOR, LATEX_COMMAND_FUNCTIONS, LATEX_COMMANDS_WITHOUT_ARGS, LATEX_COMMANDS_WITH_ARGS
+
+
+def do_nothing(*args, **kwargs):
+    pass
+
+
+NO_MOD_KEY = 0
+SHIFT = 1
+CTRL = 4
+ALT = 8
+ON_NUMPAD = 32
+SUPER = 64
+SPACE_CHAR = r'\ '
+TIMES_DOT = r'\cdot '
+# These characters reset the command_buffer that tracks typed latex commands
+COMMAND_TERMINATING_CHARS = [i for i in '\*+-=^_{}()/']
+COMMAND_TERMINATING_CHARS.append(TIMES_DOT)
+# TODO: Think about switching to using XOR to bind keys with multiple mod key states
+IGNORED_KEYS = {
+    ('\\', NO_MOD_KEY): do_nothing,
+    ('{', SHIFT): do_nothing,
+    ('}', SHIFT): do_nothing,
+    ('{', NO_MOD_KEY): do_nothing,
+    ('}', NO_MOD_KEY): do_nothing,
+    ('Shift_L', NO_MOD_KEY): do_nothing,
+    ('Shift_R', NO_MOD_KEY): do_nothing,
+    ('Control_L', NO_MOD_KEY): do_nothing,
+    ('Control_R', NO_MOD_KEY): do_nothing,
+    ('Alt_L', NO_MOD_KEY): do_nothing,
+    ('Alt_R', NO_MOD_KEY): do_nothing,
+}
 
 
 class Observable(object):
@@ -39,27 +69,38 @@ class PrettyExpression(Observable):
     This class uses a split buffer (consisting of self.left_buffer and self.right_buffer) data structure
     to contain the LaTeX math expression.  The split is at the cursor.
     """
-
     def __init__(self, data=None):
         super(PrettyExpression, self).__init__()
         self.cursor = CURSOR
-        self.reset()  # initialize left_buffer and right_buffer
+        self.left_buffer = deque()
+        self.right_buffer = deque()
+        self.command_buffer = []
+        self.BINDINGS = {
+            ('/', NO_MOD_KEY): self._make_frac,
+            ('^', SHIFT): self._insert_latex_command,
+            ('^', NO_MOD_KEY): self._insert_latex_command,
+            ('_', SHIFT): self._insert_latex_command,
+            # Control keys:
+            ('BackSpace', NO_MOD_KEY): self._backspace,
+            ('Delete', NO_MOD_KEY): self._delete,
+            ('Left', NO_MOD_KEY): self._move_cursor_left,
+            ('Right', NO_MOD_KEY): self._move_cursor_right,
+            ('Up', NO_MOD_KEY): do_nothing,
+            ('Down', NO_MOD_KEY): do_nothing,
+        }
+        self.BINDINGS.update(IGNORED_KEYS)
 
     def reset(self):
         """Reset the object to an empty state, containing only the cursor"""
         # Strictly speaking, only the right buffer needs to be a deque since it is the only one
         # that will need to push and pop its 0 index.
-        self.left_buffer = deque()
-        self.right_buffer = deque()
-        self.running_string = []
+        self.left_buffer.clear()
+        self.right_buffer.clear()
+        self.command_buffer = []
         self.notify_observers()
 
     @property
     def latex(self):
-        # TODO: Think about this, maybe it's necessary to do this only for parentheses that are matched
-        # This makes parentheses grow in height to match the expression they contain:
-        # raw = str(self)
-        # parenthesized = raw.replace('(', r'\left(').replace(')', r'\right)')
         return '$' + str(self) + '$'
 
     def __str__(self):
@@ -82,31 +123,57 @@ class PrettyExpression(Observable):
         return latex_to_python(self.cursorless_str)
 
     def add_keypress(self, newkey):
+        self.newkey = newkey
         try:
-            func = bindings.get_function_for(newkey)
-            func(self, newkey)
-        except bindings.BindingsError as error:
+            key_action = self._get_action_for_key()
+        except BindingsError as error:
             print error
-
+        key_action()
+        self._check_for_latex_command()
         print 'PrettyExpression:', str(self)
         self.notify_observers()
 
-    def insert_at_cursor(self, char):
+    def _get_action_for_key(self, key=None):
+        if key is None:
+            key = self.newkey
+        # Check to see if the key has a special binding first:
+        if (key.char, key.state) in self.BINDINGS:
+            return self.BINDINGS[(key.char, key.state)]
+        elif (key.keysym, key.state) in self.BINDINGS:
+            return self.BINDINGS[(key.keysym, key.state)]
+        elif key.char is not None:
+            # Otherwise, just insert the character if there is one:
+            return self._insert_at_cursor
+        else:
+            raise BindingsError('There is not an associated function for key ' + key.keysym + ' with state ' +
+                                key.state)
+
+    def _insert_at_cursor(self, char=None):
+        if char is None:
+            char = self.newkey.char
+        if char is '*':
+            char = TIMES_DOT
+        # Clean up blank placeholder:
+        if len(self.right_buffer) > 0 and self.right_buffer[0] == SPACE_CHAR:
+            self.right_buffer.popleft()
         self.left_buffer.append(char)
-        if len(self.right_buffer) > 0 and self.right_buffer[0] == r'\ ':
-            self.right_buffer.popleft()  # Clean up blank placeholder
-        self._check_for_latex_command()
 
-    def insert_after_cursor(self, char):
-        self.right_buffer.appendleft(char)
+    def _insert_after_cursor(self, char=None):
+        if char is None:
+            char = self.newkey.char
+        if type(char) in (tuple, list):
+            self.right_buffer.extendleft(char[::-1])
+        else:
+            self.right_buffer.appendleft(char)
 
-    def backspace(self):
+    def _backspace(self):
         # TODO: make this handle backspacing over curly braces.  Maybe make it move into the curly braces
         #       and erase the next character?  Right now it throws an error.  Maybe write a method that cleans
-        #       unmatched curly braces and call it whenever delete or backspace are called
+        #       unmatched curly braces and call it whenever _delete or _backspace are called
+        self.command_buffer = []
         try:
             if self.left_buffer[-1] == '}':
-                self.move_cursor_left()
+                self._move_cursor_left()
             if self.left_buffer[-1] == '{':
                 self.right_buffer.popleft()
                 self.left_buffer.pop()
@@ -114,52 +181,73 @@ class PrettyExpression(Observable):
         except IndexError:
             pass
 
-    def delete_char(self):
+    def _delete(self):
+        self.command_buffer = []
         try:
             self.right_buffer.popleft()
         except IndexError:
             pass
 
-    def move_cursor_left(self):
+    def _move_cursor_left(self):
         try:
             self.right_buffer.appendleft(self.left_buffer.pop())
         except IndexError:
             pass
 
-    def move_cursor_right(self):
+    def _move_cursor_right(self):
         try:
             self.left_buffer.append(self.right_buffer.popleft())
         except IndexError:
             pass
+
+    def _make_frac(self):
+        NEW_TERM_CHARS = '+-'
+        BEGIN_FRAC = r'\frac{'
+        SEPARATOR = '}{'
+        END_FRAC = '}'
+        if (len(self.left_buffer) > 0 and self.left_buffer[-1] in NEW_TERM_CHARS) or \
+           (len(self.left_buffer) == 0):
+            # This means '/' was pressed in a new term, there's no numerator or denominator
+            self._insert_at_cursor(BEGIN_FRAC)
+            self._insert_after_cursor([SEPARATOR, SPACE_CHAR, END_FRAC])
+        else:
+            # This means '/' was pressed after a numerator was entered, we need to find the numerator,
+            # put '\frac{' before it, '}{' after it but before the cursor, and '}' after the cursor
+            temp_buffer = [self.left_buffer.pop()]
+            while len(self.left_buffer) > 0 and temp_buffer[-1] not in NEW_TERM_CHARS:
+                temp_buffer.append(self.left_buffer.pop())
+            self.left_buffer.extend([BEGIN_FRAC] + temp_buffer[::-1] + [SEPARATOR])
+            self._insert_after_cursor(END_FRAC)
+
+    def _insert_latex_command(self, command=None):
+        if command is None:
+            command = self.newkey.char
+            delimiters = LATEX_COMMANDS_WITH_ARGS[command]
+            cmd_first_d = command + delimiters[0]
+        else:
+            delimiters = LATEX_COMMANDS_WITH_ARGS[command]
+            cmd_first_d = '\\' + command + delimiters[0]
+        self._insert_at_cursor(cmd_first_d)
+        for d in delimiters[:0:-1]:
+            self._insert_after_cursor(d)
 
     def _check_for_latex_command(self):
         """
         Check this object for a recently-typed LaTeX command and if there is one, parse it and
         add it to the data structure
         """
-        # This still has the problem that it terminates as soon as possible, for example it will
-        # match the 'sin' part of 'sinh' first, making it impossible to get 'sinh'
-        # TODO: Change this so it deals with the problem of prematurely writing Latex commands
-        TERMINATING_CHARS = r'\*+-=^_{}()'
-        index = len(self.left_buffer) - 1
-        next_char = self.left_buffer[index][0]
-        check_pieces = deque(next_char)
-
-        while (index >= 0) and (next_char not in TERMINATING_CHARS):
-            check_string = ''.join(check_pieces)
-            if check_string in LATEX_COMMAND_FUNCTIONS:
-                command = '\\' + check_string + ' '
-                self._replace_in_left_buffer(command, len(check_pieces))
-                self.insert_at_cursor('(')
-                self.insert_after_cursor(')')
-            elif check_string in LATEX_COMMANDS_WITHOUT_ARGS:
-                command = '\\' + check_string + ' '
-                self._replace_in_left_buffer(command, len(check_pieces))
-            index -= 1
-            next_char = self.left_buffer[index][0]
-            check_pieces.appendleft(next_char)
+        # TODO: Figure out a non-dumb way to do this
+        pass
 
     def _replace_in_left_buffer(self, string, num_pieces):
         for i in range(num_pieces):
             self.left_buffer.pop()
-        self.insert_at_cursor(string)
+        self._insert_at_cursor(string)
+
+
+class PrettyExpressionError(Exception):
+    pass
+
+
+class BindingsError(Exception):
+    pass

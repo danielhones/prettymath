@@ -61,11 +61,30 @@ class TestPrettyExpression(unittest.TestCase):
         self.expression.add_keypress(RIGHT_ARROW_KEY)
         self.assertEqual(self.expression.latex, "$y=x+2|0$")
 
+    def test_typing_latex_command(self):
+        expr = PrettyExpression()
+        for i in make_keystream("x^2"):
+            expr.add_keypress(i)
+        self.assertEqual(expr.latex, r"$x^{2|}$")
+
+    def test_make_fraction(self):
+        expr = PrettyExpression()
+        for i in make_keystream("3/4"):
+            expr.add_keypress(i)
+        self.assertEqual(expr.latex, r"$\frac{3}{4|}$")
+
+        expr.reset()
+        for i in make_keystream("x+/3"):
+            expr.add_keypress(i)
+        expr.add_keypress(RIGHT_ARROW_KEY)
+        expr.add_keypress(Key("4"))
+        self.assertEqual(expr.latex, r"$x+\frac{3}{4|}$")
+
     def test_check_for_latex_command(self):
         expr = PrettyExpression()
         for i in make_keystream("sinx"):
             expr.add_keypress(i)
-        self.assertEqual(expr.latex, r"$\sin (x|)$")
+        self.assertEqual(expr.latex, r"$\sin(x|)$")
         """
         expr.reset()
         for i in make_keystream("sinhx"):

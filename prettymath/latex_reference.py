@@ -5,20 +5,33 @@ MIT License
 """
 
 
-# This dictionary maps LaTeX commands to the number of arguments each one takes, and a special instruction,
-# and the character(s) to use to surround the first argument of the Latex command.  If three characters are given
-# (like '_{}'), the first two go in front of the argument, the last one closes it.
+DEFAULT_DELIMITERS = ('{', '}')
+PAREN_DELIMITERS = ('(', ')')
+NO_DELIMITERS = ()
+
+
+"""
+This dictionary maps LaTeX commands to the delimiters that separate their arguments.  The value for each key is a tuple
+"""
 LATEX_COMMANDS_WITH_ARGS = {
-    '/': (2, 'active data', '{}'),
-    'slash': (2, 'active data', '{}'),
-    '^': (1, '', '{}'),
-    'asciicircum': (1, '', '{}'),
-    '_': (1, '', '{}'),
-    'underscore': (1, '', '{}'),
-    'sqrt': (2, '', '[]'),
-    'log': (2, '', '_{}'),
-    'ln': (1, '', '{}'),
-    'lg': (1, '', '{}'),
+    '^': DEFAULT_DELIMITERS,
+    '_': DEFAULT_DELIMITERS,
+    'ln': DEFAULT_DELIMITERS,
+    'lg': DEFAULT_DELIMITERS,
+    'sqrt': DEFAULT_DELIMITERS,
+    'log': ('_{', '}{', '}'),
+    'sin': PAREN_DELIMITERS,
+    'cos': PAREN_DELIMITERS,
+    'tan': PAREN_DELIMITERS,
+    'cot': PAREN_DELIMITERS,
+    'sec': PAREN_DELIMITERS,
+    'csc': PAREN_DELIMITERS,
+    'arcsin': PAREN_DELIMITERS,
+    'arccos': PAREN_DELIMITERS,
+    'arctan': PAREN_DELIMITERS,
+    'sinh': PAREN_DELIMITERS,
+    'cosh': PAREN_DELIMITERS,
+    'tanh': PAREN_DELIMITERS,
 }
 
 # These commands (including Greek letters) take no arguments, just get a backslash before
@@ -59,7 +72,7 @@ greek_letters = [
     # 'mu',
     # 'nu',
     # 'xi', 'Xi',
-    'pi', 'Pi',
+    'pi', # 'Pi',
     # 'rho', 'varrho',
     # 'sigma', 'Sigma',
     # 'tau',
