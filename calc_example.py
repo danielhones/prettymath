@@ -1,7 +1,7 @@
 """
 GUI to test the realtime update and rendering of PrettyEquation instance.
 
-This is very sloppy
+This is very sloppy, please excuse me for that.
 """
 
 

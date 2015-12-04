@@ -50,7 +50,6 @@ def translate_token(token, lexer):
     def EXPONENT():
         result = ['**']
         arg = get_next_arg()
-        # I think this works here:
         result.append(parenthesize(latex_to_python(arg.value)))
         return ''.join(result)
 

@@ -17,6 +17,7 @@ TODO: Look into defining and using custom font to custom render the cursor so it
 from collections import deque
 from latex_translate import latex_to_python
 from latex_reference import CURSOR, LATEX_COMMAND_FUNCTIONS, LATEX_COMMANDS_WITHOUT_ARGS, LATEX_COMMANDS_WITH_ARGS
+import re
 
 
 def do_nothing(*args, **kwargs):
@@ -122,8 +123,8 @@ class PrettyExpression(Observable):
             # Otherwise, just insert the character if there is one:
             return self._insert_at_cursor
         else:
-            raise BindingsError('There is not an associated function for key ' + key.keysym + ' with state ' +
-                                key.state)
+            raise BindingsError('There is not an associated function for key %s with state %s' %
+                                (key.keysym, key.state))
 
     def _insert_at_cursor(self, char=None):
         if char is None:
@@ -178,7 +179,7 @@ class PrettyExpression(Observable):
             pass
 
     def _make_frac(self):
-        NEW_TERM_CHARS = '+-'
+        NEW_TERM_CHARS = '+-()'
         BEGIN_FRAC = r'\frac{'
         SEPARATOR = '}{'
         END_FRAC = '}'
@@ -223,7 +224,25 @@ class PrettyExpression(Observable):
 
     @property
     def latex(self):
-        return '$' + str(self) + '$'
+        LEFT_PAREN = r'\left('
+        RIGHT_PAREN = r'\right)'
+        balance = self._paren_balance()
+
+        if balance == 0:
+            pretty_parens = str(self).replace('(', LEFT_PAREN).replace(')', RIGHT_PAREN)
+        elif balance < 0:
+            # too many left parens
+            count = str(self).count('(') - abs(balance)
+            pretty_parens = re.sub(r'\(', LEFT_PAREN, str(self), count=count)
+        elif balance > 0:
+            # too many right parens
+            count = str(self).count(')') - abs(balance)
+            pretty_parens = re.sub(r'\)', RIGHT_PAREN, str(self), count=count)
+        return '$' + pretty_parens + '$'
+
+    @property
+    def expression(self):
+        return latex_to_python(self.cursorless_str)
 
     def __str__(self):
         return self._before_cursor + self.cursor + self._after_cursor
@@ -240,9 +259,14 @@ class PrettyExpression(Observable):
     def _after_cursor(self):
         return ''.join(self.right_buffer)
 
-    @property
-    def expression(self):
-        return latex_to_python(self.cursorless_str)
+    def _paren_balance(self):
+        paren_balance = 0
+        for char in str(self):
+            if char == '(':
+                paren_balance += 1
+            elif char == ')':
+                paren_balance -= 1
+        return paren_balance
 
 
 class PrettyExpressionError(Exception):
